@@ -506,16 +506,16 @@ class Visual {
     }
     update(options) {
         this.formattingSettings = this.formattingSettingsService.populateFormattingSettingsModel(_settings__WEBPACK_IMPORTED_MODULE_1__/* .VisualFormattingSettingsModel */ .E, options.dataViews);
-        console.log('Visual update', _sampleDataSet__WEBPACK_IMPORTED_MODULE_0__/* .sunburstData */ .x);
-        const width = options.viewport.width;
-        const height = width;
-        const radius = width / 15;
+        this.sunburstchartsvg.selectAll("*").remove();
+        const svgWidth = options.viewport.width;
+        const canvasHeight = options.viewport.height;
+        const radius = canvasHeight / 6;
         // Create the color scale.
         const color = d3__WEBPACK_IMPORTED_MODULE_2__/* .scaleOrdinal */ .PKp(d3__WEBPACK_IMPORTED_MODULE_2__/* .quantize */ .q$2(d3__WEBPACK_IMPORTED_MODULE_2__/* .interpolateRainbow */ .ICD, _sampleDataSet__WEBPACK_IMPORTED_MODULE_0__/* .sunburstData.children.length */ .x.children.length + 1));
         // Compute the layout.
         const hierarchy = d3__WEBPACK_IMPORTED_MODULE_2__/* .hierarchy */ .bT9(_sampleDataSet__WEBPACK_IMPORTED_MODULE_0__/* .sunburstData */ .x)
-            .sum((d) => d.value);
-        //.sort((a, b) => b.value - a.value);
+            .sum((d) => d.value)
+            .sort((a, b) => b.value - a.value);
         const root = d3__WEBPACK_IMPORTED_MODULE_2__/* .partition */ .uKc()
             .size([2 * Math.PI, hierarchy.height + 1])(hierarchy);
         root.each((d) => d.current = d);
@@ -527,29 +527,30 @@ class Visual {
             .padRadius(radius * 1.5)
             .innerRadius((d) => d.y0 * radius)
             .outerRadius((d) => Math.max(d.y0 * radius, d.y1 * radius - 1));
-        // Create the SVG container.
+        // Create the SVG container
         const svg = this.sunburstchartsvg
-            .attr("viewBox", [-width / 2, -height / 5, width, width]);
-        //.style("font", "5px sans-serif");
+            .attr("viewBox", [-svgWidth / 2, -canvasHeight / 2, svgWidth, canvasHeight])
+            .style("font-size", canvasHeight / 50);
         const path = svg.append("g")
             .selectAll("path")
             .data(root.descendants().slice(1))
             .join("path")
             .attr("fill", (d) => { while (d.depth > 1)
             d = d.parent; return color(d.data.name); })
-            .attr("fill-opacity", (d) => arcVisible(d.current) ? (d.children ? 0.6 : 0.4) : 0)
+            .attr("fill-opacity", (d) => arcVisible(d.current) ? (d.children ? 1 : 0.8) : 0)
             .attr("pointer-events", (d) => arcVisible(d.current) ? "auto" : "none")
             .attr("d", (d) => arc(d.current));
-        path.filter((d) => d.children);
-        // .style("cursor", "pointer");
-        //.on("click",clicked);
+        path.filter((d) => d.children)
+            .classed("path-filter", true)
+            .on("click", clicked);
         const format = d3__WEBPACK_IMPORTED_MODULE_2__/* .format */ .WUZ(",d");
         path.append("title")
+            .classed("title-text", true)
             .text(d => `${d.ancestors().map((d) => d.data.name).reverse().join("/")}\n${format(d.value)}`);
         const label = svg.append("g")
             .attr("pointer-events", "none")
             .attr("text-anchor", "middle")
-            //.style("user-select", "none")
+            .style("user-select", "none")
             .selectAll("text")
             .data(root.descendants().slice(1))
             .join("text")
@@ -561,8 +562,38 @@ class Visual {
             .datum(root)
             .attr("r", radius)
             .attr("fill", "none")
-            .attr("pointer-events", "all");
-        //.on("click", clicked);
+            .attr("pointer-events", "all")
+            .on("click", clicked);
+        function clicked(p) {
+            parent.datum(p.parent || root);
+            root.each((d) => d.target = {
+                x0: Math.max(0, Math.min(1, (d.x0 - p.x0) / (p.x1 - p.x0))) * 2 * Math.PI,
+                x1: Math.max(0, Math.min(1, (d.x1 - p.x0) / (p.x1 - p.x0))) * 2 * Math.PI,
+                y0: Math.max(0, d.y0 - p.depth),
+                y1: Math.max(0, d.y1 - p.depth)
+            });
+            const t = svg.transition().duration(750);
+            path.transition(t)
+                .tween("sunburstData", (d) => {
+                const i = d3__WEBPACK_IMPORTED_MODULE_2__/* .interpolate */ .sXR(d.current, d.target);
+                return t => d.current = i(t);
+            })
+                .filter(function (d) {
+                return d3__WEBPACK_IMPORTED_MODULE_2__/* .select */ .Ys(this).attr("fill-opacity") !== null || arcVisible(d.target);
+            })
+                .attr("fill-opacity", (d) => arcVisible(d.target) ? (d.children ? 0.6 : 0.4) : 0)
+                .attr("pointer-events", (d) => arcVisible(d.target) ? "auto" : "none")
+                .attrTween("d", (d) => () => arc(d.current));
+            // label.filter(function(d) {
+            //   return +this.getAttribute("fill-opacity") || labelVisible(d.target);
+            label.filter(function (d) {
+                // Explicitly specify the type of 'd' as any, or the appropriate type if known
+                const hierarchyNode = d;
+                return +this.getAttribute("fill-opacity") !== 0 || labelVisible(hierarchyNode.target);
+            }).transition(t)
+                .attr("fill-opacity", (d) => +labelVisible(d.target))
+                .attrTween("transform", (d) => () => labelTransform(d.current));
+        }
         function arcVisible(d) {
             return d.y1 <= 3 && d.y0 >= 1 && d.x1 > d.x0;
         }
@@ -575,7 +606,7 @@ class Visual {
             return `rotate(${x - 90}) translate(${y},0) rotate(${x < 180 ? 0 : 180})`;
         }
     }
-    /**
+    /*
      * Returns properties pane formatting model content hierarchies, properties and latest formatting values, Then populate properties pane.
      * This method is called once every time we open properties pane or when the user edit any format property.
      */
@@ -4538,6 +4569,39 @@ function leastCommonAncestor(a, b) {
 
 /***/ }),
 
+/***/ 8122:
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "M": () => (/* binding */ genericArray)
+/* harmony export */ });
+/* harmony import */ var _value_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(1265);
+
+
+
+/* harmony default export */ function __WEBPACK_DEFAULT_EXPORT__(a, b) {
+  return (isNumberArray(b) ? numberArray : genericArray)(a, b);
+}
+
+function genericArray(a, b) {
+  var nb = b ? b.length : 0,
+      na = a ? Math.min(nb, a.length) : 0,
+      x = new Array(na),
+      c = new Array(nb),
+      i;
+
+  for (i = 0; i < na; ++i) x[i] = (0,_value_js__WEBPACK_IMPORTED_MODULE_0__/* ["default"] */ .Z)(a[i], b[i]);
+  for (; i < nb; ++i) c[i] = b[i];
+
+  return function(t) {
+    for (i = 0; i < na; ++i) c[i] = x[i](t);
+    return c;
+  };
+}
+
+
+/***/ }),
+
 /***/ 9885:
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
@@ -4690,13 +4754,31 @@ var cubehelixLong = cubehelix(_color_js__WEBPACK_IMPORTED_MODULE_1__/* ["default
 
 /***/ }),
 
+/***/ 88:
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "Z": () => (/* export default binding */ __WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony default export */ function __WEBPACK_DEFAULT_EXPORT__(a, b) {
+  var d = new Date;
+  return a = +a, b = +b, function(t) {
+    return d.setTime(a * (1 - t) + b * t), d;
+  };
+}
+
+
+/***/ }),
+
 /***/ 3413:
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "q$": () => (/* reexport safe */ _quantize_js__WEBPACK_IMPORTED_MODULE_0__.Z)
+/* harmony export */   "q$": () => (/* reexport safe */ _quantize_js__WEBPACK_IMPORTED_MODULE_1__.Z),
+/* harmony export */   "sX": () => (/* reexport safe */ _value_js__WEBPACK_IMPORTED_MODULE_0__.Z)
 /* harmony export */ });
-/* harmony import */ var _quantize_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(7659);
+/* harmony import */ var _value_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(1265);
+/* harmony import */ var _quantize_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(7659);
 
 
 
@@ -4731,6 +4813,65 @@ var cubehelixLong = cubehelix(_color_js__WEBPACK_IMPORTED_MODULE_1__/* ["default
 /* harmony default export */ function __WEBPACK_DEFAULT_EXPORT__(a, b) {
   return a = +a, b = +b, function(t) {
     return a * (1 - t) + b * t;
+  };
+}
+
+
+/***/ }),
+
+/***/ 7896:
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "Z": () => (/* export default binding */ __WEBPACK_DEFAULT_EXPORT__),
+/* harmony export */   "v": () => (/* binding */ isNumberArray)
+/* harmony export */ });
+/* harmony default export */ function __WEBPACK_DEFAULT_EXPORT__(a, b) {
+  if (!b) b = [];
+  var n = a ? Math.min(b.length, a.length) : 0,
+      c = b.slice(),
+      i;
+  return function(t) {
+    for (i = 0; i < n; ++i) c[i] = a[i] * (1 - t) + b[i] * t;
+    return c;
+  };
+}
+
+function isNumberArray(x) {
+  return ArrayBuffer.isView(x) && !(x instanceof DataView);
+}
+
+
+/***/ }),
+
+/***/ 8528:
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "Z": () => (/* export default binding */ __WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var _value_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(1265);
+
+
+/* harmony default export */ function __WEBPACK_DEFAULT_EXPORT__(a, b) {
+  var i = {},
+      c = {},
+      k;
+
+  if (a === null || typeof a !== "object") a = {};
+  if (b === null || typeof b !== "object") b = {};
+
+  for (k in b) {
+    if (k in a) {
+      i[k] = (0,_value_js__WEBPACK_IMPORTED_MODULE_0__/* ["default"] */ .Z)(a[k], b[k]);
+    } else {
+      c[k] = b[k];
+    }
+  }
+
+  return function(t) {
+    for (k in i) c[k] = i[k](t);
+    return c;
   };
 }
 
@@ -5042,6 +5183,47 @@ function parseSvg(value) {
   if (!(value = svgNode.transform.baseVal.consolidate())) return _decompose_js__WEBPACK_IMPORTED_MODULE_0__/* .identity */ .y;
   value = value.matrix;
   return (0,_decompose_js__WEBPACK_IMPORTED_MODULE_0__/* ["default"] */ .Z)(value.a, value.b, value.c, value.d, value.e, value.f);
+}
+
+
+/***/ }),
+
+/***/ 1265:
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "Z": () => (/* export default binding */ __WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var d3_color__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(6372);
+/* harmony import */ var _rgb_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(3414);
+/* harmony import */ var _array_js__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(8122);
+/* harmony import */ var _date_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(88);
+/* harmony import */ var _number_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(3626);
+/* harmony import */ var _object_js__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(8528);
+/* harmony import */ var _string_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(9843);
+/* harmony import */ var _constant_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(5302);
+/* harmony import */ var _numberArray_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(7896);
+
+
+
+
+
+
+
+
+
+
+/* harmony default export */ function __WEBPACK_DEFAULT_EXPORT__(a, b) {
+  var t = typeof b, c;
+  return b == null || t === "boolean" ? (0,_constant_js__WEBPACK_IMPORTED_MODULE_0__/* ["default"] */ .Z)(b)
+      : (t === "number" ? _number_js__WEBPACK_IMPORTED_MODULE_1__/* ["default"] */ .Z
+      : t === "string" ? ((c = (0,d3_color__WEBPACK_IMPORTED_MODULE_2__/* ["default"] */ .ZP)(b)) ? (b = c, _rgb_js__WEBPACK_IMPORTED_MODULE_3__/* ["default"] */ .ZP) : _string_js__WEBPACK_IMPORTED_MODULE_4__/* ["default"] */ .Z)
+      : b instanceof d3_color__WEBPACK_IMPORTED_MODULE_2__/* ["default"] */ .ZP ? _rgb_js__WEBPACK_IMPORTED_MODULE_3__/* ["default"] */ .ZP
+      : b instanceof Date ? _date_js__WEBPACK_IMPORTED_MODULE_5__/* ["default"] */ .Z
+      : (0,_numberArray_js__WEBPACK_IMPORTED_MODULE_6__/* .isNumberArray */ .v)(b) ? _numberArray_js__WEBPACK_IMPORTED_MODULE_6__/* ["default"] */ .Z
+      : Array.isArray(b) ? _array_js__WEBPACK_IMPORTED_MODULE_7__/* .genericArray */ .M
+      : typeof b.valueOf !== "function" && typeof b.toString !== "function" || isNaN(b) ? _object_js__WEBPACK_IMPORTED_MODULE_8__/* ["default"] */ .Z
+      : _number_js__WEBPACK_IMPORTED_MODULE_1__/* ["default"] */ .Z)(a, b);
 }
 
 
@@ -11753,6 +11935,7 @@ var dependencies = {"d3-array":"1","d3-axis":"1","d3-brush":"1","d3-chord":"1","
 /* harmony export */   "Ys": () => (/* reexport safe */ d3_selection__WEBPACK_IMPORTED_MODULE_14__.Ys),
 /* harmony export */   "bT9": () => (/* reexport safe */ d3_hierarchy__WEBPACK_IMPORTED_MODULE_9__.bT),
 /* harmony export */   "q$2": () => (/* reexport safe */ d3_interpolate__WEBPACK_IMPORTED_MODULE_10__.q$),
+/* harmony export */   "sXR": () => (/* reexport safe */ d3_interpolate__WEBPACK_IMPORTED_MODULE_10__.sX),
 /* harmony export */   "uKc": () => (/* reexport safe */ d3_hierarchy__WEBPACK_IMPORTED_MODULE_9__.uK)
 /* harmony export */ });
 /* harmony import */ var _dist_package_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(2156);
