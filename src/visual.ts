@@ -1,6 +1,6 @@
 "use strict";
 
-import powerbi from "powerbi-visuals-api";
+//import powerbi from "powerbi-visuals-api";
 import { FormattingSettingsService } from "powerbi-visuals-utils-formattingmodel";
 import "./../style/visual.less";
 import {sunburstData} from "./sampleDataSet";
@@ -86,6 +86,7 @@ export class Visual implements IVisual {
       .data(root.descendants().slice(1))
       .join("text")
       .attr("dy", "0.35em")
+      .style("font-size", d3.min([svgWidth, canvasHeight])/50 + "px")
       .attr("fill-opacity", (d:any) => +labelVisible(d.current))
       .attr("transform", (d:any) => labelTransform(d.current))
       .text((d:any) => d.data.name);

@@ -494,6 +494,7 @@ class VisualFormattingSettingsModel extends FormattingSettingsModel {
 /* harmony import */ var _settings__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(7558);
 /* harmony import */ var d3__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(662);
 
+//import powerbi from "powerbi-visuals-api";
 
 
 
@@ -557,6 +558,7 @@ class Visual {
             .data(root.descendants().slice(1))
             .join("text")
             .attr("dy", "0.35em")
+            .style("font-size", d3__WEBPACK_IMPORTED_MODULE_2__/* .min */ .VV$([svgWidth, canvasHeight]) / 50 + "px")
             .attr("fill-opacity", (d) => +labelVisible(d.current))
             .attr("transform", (d) => labelTransform(d.current))
             .text((d) => d.data.name);
@@ -792,12 +794,16 @@ function ascendingComparator(f) {
 /***/ }),
 
 /***/ 91:
-/***/ ((__unused_webpack_module, __unused_webpack___webpack_exports__, __webpack_require__) => {
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "VV": () => (/* reexport safe */ _min__WEBPACK_IMPORTED_MODULE_3__.Z)
+/* harmony export */ });
 /* harmony import */ var _bisect__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(4355);
 /* harmony import */ var _histogram__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(902);
 /* harmony import */ var _threshold_freedmanDiaconis__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(4081);
-/* harmony import */ var _ticks__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(7614);
+/* harmony import */ var _min__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(622);
+/* harmony import */ var _ticks__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(7614);
 
 
 
@@ -825,6 +831,50 @@ function ascendingComparator(f) {
 
 
 
+
+
+/***/ }),
+
+/***/ 622:
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "Z": () => (/* export default binding */ __WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony default export */ function __WEBPACK_DEFAULT_EXPORT__(values, valueof) {
+  var n = values.length,
+      i = -1,
+      value,
+      min;
+
+  if (valueof == null) {
+    while (++i < n) { // Find the first comparable value.
+      if ((value = values[i]) != null && value >= value) {
+        min = value;
+        while (++i < n) { // Compare the remaining values.
+          if ((value = values[i]) != null && min > value) {
+            min = value;
+          }
+        }
+      }
+    }
+  }
+
+  else {
+    while (++i < n) { // Find the first comparable value.
+      if ((value = valueof(values[i], i, values)) != null && value >= value) {
+        min = value;
+        while (++i < n) { // Compare the remaining values.
+          if ((value = valueof(values[i], i, values)) != null && min > value) {
+            min = value;
+          }
+        }
+      }
+    }
+  }
+
+  return min;
+}
 
 
 /***/ }),
@@ -11933,6 +11983,7 @@ var dependencies = {"d3-array":"1","d3-axis":"1","d3-brush":"1","d3-chord":"1","
 /* harmony export */   "ICD": () => (/* reexport safe */ d3_scale_chromatic__WEBPACK_IMPORTED_MODULE_13__.IC),
 /* harmony export */   "Nb1": () => (/* reexport safe */ d3_shape__WEBPACK_IMPORTED_MODULE_15__.Nb),
 /* harmony export */   "PKp": () => (/* reexport safe */ d3_scale__WEBPACK_IMPORTED_MODULE_12__.PK),
+/* harmony export */   "VV$": () => (/* reexport safe */ d3_array__WEBPACK_IMPORTED_MODULE_1__.VV),
 /* harmony export */   "WUZ": () => (/* reexport safe */ d3_format__WEBPACK_IMPORTED_MODULE_8__.WU),
 /* harmony export */   "Ys": () => (/* reexport safe */ d3_selection__WEBPACK_IMPORTED_MODULE_14__.Ys),
 /* harmony export */   "bT9": () => (/* reexport safe */ d3_hierarchy__WEBPACK_IMPORTED_MODULE_9__.bT),
