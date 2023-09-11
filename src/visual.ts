@@ -1,6 +1,6 @@
 "use strict";
 
-//import powerbi from "powerbi-visuals-api";
+import powerbi from "powerbi-visuals-api";
 import { FormattingSettingsService } from "powerbi-visuals-utils-formattingmodel";
 import "./../style/visual.less";
 import {sunburstData} from "./sampleDataSet";
@@ -10,13 +10,13 @@ import IVisual = powerbi.extensibility.visual.IVisual;
 import { VisualFormattingSettingsModel } from "./settings";
 import * as d3 from 'd3';
 export class Visual implements IVisual {
-    private target: HTMLElement;
+    private target:HTMLElement;
     private formattingSettings: VisualFormattingSettingsModel;
     private formattingSettingsService: FormattingSettingsService;
     sunburstchartsvg: d3.Selection<SVGSVGElement, unknown, null, undefined>;
 
 
-    
+
     constructor(options: VisualConstructorOptions) {
 
         this.formattingSettingsService = new FormattingSettingsService();
