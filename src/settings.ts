@@ -41,7 +41,7 @@ class DataPointCardSettings extends FormattingSettingsCard {
         displayName: "Default color",
         value: { value: "" }
     });
-
+    
     showAllDataPoints = new formattingSettings.ToggleSwitch({
         name: "showAllDataPoints",
         displayName: "Show all",
@@ -73,8 +73,11 @@ class DataPointCardSettings extends FormattingSettingsCard {
 
 /**
 * visual settings model class
+
+
 *
 */
+
 export class VisualFormattingSettingsModel extends FormattingSettingsModel {
     // Create formatting settings model formatting cards
     dataPointCard = new DataPointCardSettings();

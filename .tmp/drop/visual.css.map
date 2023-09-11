@@ -1,1 +1,1 @@
-{"version":3,"file":"visual.css","mappings":"AAAA;EAAc;AAEd;AADA;EAAM;AAIN;AAHA;EAAI;AAMJ","sources":["webpack:///./style/visual.less"],"sourcesContent":[".path-filter{ cursor : pointer}\nlabel{user-select : none}\nsvg{cursor:auto;}\n\n\n\n\n  "],"names":[],"sourceRoot":""}
+{"version":3,"file":"visual.css","mappings":"AAAA;EAAc;AAEd;AADA;EAAM;AAIN","sources":["webpack:///./style/visual.less"],"sourcesContent":[".path-filter{ cursor : pointer}\nlabel{user-select : none}\n\n\n\n\n\n\n\n  "],"names":[],"sourceRoot":""}

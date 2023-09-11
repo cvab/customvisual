@@ -15,8 +15,10 @@ export class Visual implements IVisual {
     private formattingSettingsService: FormattingSettingsService;
     sunburstchartsvg: d3.Selection<SVGSVGElement, unknown, null, undefined>;
 
+    
+
     constructor(options: VisualConstructorOptions) {
-//console.log('Visual constructor', options);
+
         this.formattingSettingsService = new FormattingSettingsService();
         this.target =options.element;
         this.sunburstchartsvg=d3.select(this.target).append("svg").classed("sunburstchartsvg",true);
@@ -26,8 +28,8 @@ export class Visual implements IVisual {
         this.formattingSettings = this.formattingSettingsService.populateFormattingSettingsModel(VisualFormattingSettingsModel, options.dataViews);
         this.sunburstchartsvg.selectAll("*").remove();
         const svgWidth = options.viewport.width;
-     const canvasHeight=options.viewport.height;
-      const radius = canvasHeight / 6;
+        const canvasHeight=options.viewport.height;
+        const radius = canvasHeight / 6;
     
       // Create the color scale.
       
@@ -35,7 +37,7 @@ export class Visual implements IVisual {
       // Compute the layout.
       const hierarchy = d3.hierarchy(sunburstData)
         .sum((d:any) => d.value)
-      .sort((a, b) => b.value - a.value);
+        .sort((a, b) => b.value - a.value);
       const root = d3.partition()
         .size([2 * Math.PI, hierarchy.height + 1])
         (hierarchy);
@@ -53,7 +55,9 @@ export class Visual implements IVisual {
         
       const svg = this.sunburstchartsvg
       .attr("viewBox", [-svgWidth/2 , -canvasHeight/2, svgWidth, canvasHeight])
-      .style("font-size",  canvasHeight/50);
+      .style("font-size", canvasHeight/50) 
+      .style("cursor","auto")
+
       const path = svg.append("g")
         .selectAll("path")
         .data(root.descendants().slice(1))
@@ -62,15 +66,18 @@ export class Visual implements IVisual {
         .attr("fill-opacity", (d:any) => arcVisible(d.current) ? (d.children ? 1 : 0.8) : 0)
         .attr("pointer-events", (d:any) => arcVisible(d.current) ? "auto" : "none")
         .attr("d", (d:any) => arc(d.current))
+
        path.filter((d:any) => d.children)
        .classed("path-filter",true)
+
        .on("click",clicked);
 
         const format = d3.format(",d");
       path.append("title")
        .classed("title-text",true)
        .text(d => `${d.ancestors().map((d:any) => d.data.name).reverse().join("/")}\n${format(d.value)}`)
-       
+  
+    
       const label = svg.append("g")
       .attr("pointer-events", "none")
       .attr("text-anchor", "middle")
@@ -82,12 +89,14 @@ export class Visual implements IVisual {
       .attr("fill-opacity", (d:any) => +labelVisible(d.current))
       .attr("transform", (d:any) => labelTransform(d.current))
       .text((d:any) => d.data.name);
+      
       const parent = svg.append("circle")
       .datum(root)
       .attr("r", radius)
       .attr("fill", "none")
       .attr("pointer-events", "all")
-      .on("click", clicked);
+      .on("click", clicked)
+      
       
       function clicked(p: { parent: any; x0: number; x1: number; depth: number; }) {
         parent.datum(p.parent || root);
@@ -123,7 +132,7 @@ export class Visual implements IVisual {
           .attrTween("transform", (d:any) => () => labelTransform(d.current));
       }
 
-      function arcVisible(d: { y1: number; y0: number; x1: number; x0: number; }) {
+     function arcVisible(d: { y1: number; y0: number; x1: number; x0: number; }) {
         return d.y1 <= 3 && d.y0 >= 1 && d.x1 > d.x0;
       }
 
@@ -136,6 +145,7 @@ export class Visual implements IVisual {
         const y = (d.y0 + d.y1) / 2 * radius;
         return `rotate(${x - 90}) translate(${y},0) rotate(${x < 180 ? 0 : 180})`;
       }
+    
     }
 
     /*

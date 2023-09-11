@@ -17,6 +17,8 @@ declare class DataPointCardSettings extends FormattingSettingsCard {
 }
 /**
 * visual settings model class
+
+
 *
 */
 export declare class VisualFormattingSettingsModel extends FormattingSettingsModel {

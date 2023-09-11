@@ -467,6 +467,8 @@ class DataPointCardSettings extends FormattingSettingsCard {
 }
 /**
 * visual settings model class
+
+
 *
 */
 class VisualFormattingSettingsModel extends FormattingSettingsModel {
@@ -499,7 +501,6 @@ class VisualFormattingSettingsModel extends FormattingSettingsModel {
 
 class Visual {
     constructor(options) {
-        //console.log('Visual constructor', options);
         this.formattingSettingsService = new powerbi_visuals_utils_formattingmodel__WEBPACK_IMPORTED_MODULE_3__/* ["default"] */ .Z();
         this.target = options.element;
         this.sunburstchartsvg = d3__WEBPACK_IMPORTED_MODULE_2__/* .select */ .Ys(this.target).append("svg").classed("sunburstchartsvg", true);
@@ -530,7 +531,8 @@ class Visual {
         // Create the SVG container
         const svg = this.sunburstchartsvg
             .attr("viewBox", [-svgWidth / 2, -canvasHeight / 2, svgWidth, canvasHeight])
-            .style("font-size", canvasHeight / 50);
+            .style("font-size", canvasHeight / 50)
+            .style("cursor", "auto");
         const path = svg.append("g")
             .selectAll("path")
             .data(root.descendants().slice(1))
