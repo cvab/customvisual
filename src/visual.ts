@@ -15,8 +15,8 @@ export class Visual implements IVisual {
     private formattingSettingsService: FormattingSettingsService;
     sunburstchartsvg: d3.Selection<SVGSVGElement, unknown, null, undefined>;
 
-    
 
+    
     constructor(options: VisualConstructorOptions) {
 
         this.formattingSettingsService = new FormattingSettingsService();
