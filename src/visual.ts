@@ -29,7 +29,7 @@ export class Visual implements IVisual {
         this.sunburstchartsvg.selectAll("*").remove();
         const svgWidth = options.viewport.width;
         const canvasHeight=options.viewport.height;
-        const radius = canvasHeight / 6;
+        const radius = Math.min(svgWidth,canvasHeight) / 6;
     
       // Create the color scale.
       

@@ -510,7 +510,7 @@ class Visual {
         this.sunburstchartsvg.selectAll("*").remove();
         const svgWidth = options.viewport.width;
         const canvasHeight = options.viewport.height;
-        const radius = canvasHeight / 6;
+        const radius = Math.min(svgWidth, canvasHeight) / 6;
         // Create the color scale.
         const color = d3__WEBPACK_IMPORTED_MODULE_2__/* .scaleOrdinal */ .PKp(d3__WEBPACK_IMPORTED_MODULE_2__/* .quantize */ .q$2(d3__WEBPACK_IMPORTED_MODULE_2__/* .interpolateRainbow */ .ICD, _sampleDataSet__WEBPACK_IMPORTED_MODULE_0__/* .sunburstData.children.length */ .x.children.length + 1));
         // Compute the layout.
