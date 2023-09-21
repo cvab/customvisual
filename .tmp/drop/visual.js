@@ -139,6 +139,7 @@ class Visual {
                 hierarchicalData.children.push(newParent);
                 const filteredChildArray = children.filter((child, index) => `${parents[index]}` === `${parent}`);
                 const filteredValuedArray = values.filter((value, index) => `${parents[index]}` === `${parent}`);
+                console.log("filtered", filteredChildArray);
                 filteredChildArray.forEach((el, index) => {
                     const newChild = {
                         name: el,
