@@ -124,6 +124,7 @@ export class Visual implements IVisual {
           .attrTween("d", (d:any) => () => arc(d.current));
           // label.filter(function(d) {
           //   return +this.getAttribute("fill-opacity") || labelVisible(d.target);
+        
           label.filter(function(d) {
             // Explicitly specify the type of 'd' as any, or the appropriate type if known
             const hierarchyNode: any = d;

@@ -494,7 +494,6 @@ class VisualFormattingSettingsModel extends FormattingSettingsModel {
 /* harmony import */ var _settings__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(7558);
 /* harmony import */ var d3__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(662);
 
-//import powerbi from "powerbi-visuals-api";
 
 
 
@@ -802,7 +801,7 @@ function ascendingComparator(f) {
 /* harmony import */ var _bisect__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(4355);
 /* harmony import */ var _histogram__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(902);
 /* harmony import */ var _threshold_freedmanDiaconis__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(4081);
-/* harmony import */ var _min__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(622);
+/* harmony import */ var _min__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(7622);
 /* harmony import */ var _ticks__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(7614);
 
 
@@ -835,7 +834,7 @@ function ascendingComparator(f) {
 
 /***/ }),
 
-/***/ 622:
+/***/ 7622:
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {

@@ -1,3 +1,4 @@
+import powerbi from "powerbi-visuals-api";
 import "./../style/visual.less";
 import VisualConstructorOptions = powerbi.extensibility.visual.VisualConstructorOptions;
 import VisualUpdateOptions = powerbi.extensibility.visual.VisualUpdateOptions;
