@@ -122,15 +122,16 @@ class Visual {
         const dataView = options.dataViews[0];
         const valuess = dataView.categorical.values[0];
         // Sample data received from Power BI (replace with your actual data)
-        const parents = options.dataViews[0].categorical.categories[0].values;
+        const parents = dataView.categorical.categories[0].values;
         const children = options.dataViews[0].categorical.categories[1].values;
         const values = valuess.values;
         const hierarchicalData = {
             name: "sunburst",
             children: [],
         };
-        parents.forEach((parent, parentIndex) => {
+        parents.forEach((parent) => {
             const existingParent = hierarchicalData.children.find((item) => item.name === parent);
+            console.log("existing ", parent);
             if (!existingParent) {
                 const newParent = {
                     name: parent,
