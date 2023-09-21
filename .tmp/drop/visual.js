@@ -119,11 +119,10 @@ class Visual {
         const svgWidth = options.viewport.width;
         const canvasHeight = options.viewport.height;
         const radius = Math.min(svgWidth, canvasHeight) / 6;
-        const dataView = options.dataViews[0];
-        const valuess = dataView.categorical.values[0];
-        // Sample data received from Power BI (replace with your actual data)
-        const parents = dataView.categorical.categories[0].values;
-        const children = options.dataViews[0].categorical.categories[1].values;
+        const dataView = options.dataViews[0].categorical;
+        const valuess = dataView.values[0];
+        const parents = dataView.categories[0].values;
+        const children = dataView.categories[1].values;
         const values = valuess.values;
         const hierarchicalData = {
             name: "sunburst",
@@ -151,7 +150,7 @@ class Visual {
             }
         });
         console.log(hierarchicalData);
-        const color = d3__WEBPACK_IMPORTED_MODULE_1__/* .scaleOrdinal */ .PKp(d3__WEBPACK_IMPORTED_MODULE_1__/* .quantize */ .q$2(d3__WEBPACK_IMPORTED_MODULE_1__/* .interpolateRainbow */ .ICD, dataView.categorical.categories.length + 1));
+        const color = d3__WEBPACK_IMPORTED_MODULE_1__/* .scaleOrdinal */ .PKp(d3__WEBPACK_IMPORTED_MODULE_1__/* .quantize */ .q$2(d3__WEBPACK_IMPORTED_MODULE_1__/* .interpolateRainbow */ .ICD, dataView.categories.length + 1));
         // Compute the layout.
         const hierarchy = d3__WEBPACK_IMPORTED_MODULE_1__/* .hierarchy */ .bT9(hierarchicalData)
             .sum((d) => d.value)
@@ -2284,7 +2283,7 @@ function hsl2rgb(h, m1, m2) {
 
 /***/ }),
 
-/***/ 218:
+/***/ 8218:
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
@@ -2293,7 +2292,7 @@ function hsl2rgb(h, m1, m2) {
 /* unused harmony export Cubehelix */
 /* harmony import */ var _define_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(4087);
 /* harmony import */ var _color_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(6372);
-/* harmony import */ var _math_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(144);
+/* harmony import */ var _math_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(1144);
 
 
 
@@ -2380,7 +2379,7 @@ function extend(parent, definition) {
 
 /***/ }),
 
-/***/ 144:
+/***/ 1144:
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
@@ -4402,13 +4401,13 @@ function nogamma(a, b) {
 
 /***/ }),
 
-/***/ 499:
+/***/ 8499:
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "B": () => (/* binding */ cubehelixLong)
 /* harmony export */ });
-/* harmony import */ var d3_color__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(218);
+/* harmony import */ var d3_color__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(8218);
 /* harmony import */ var _color_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(5910);
 
 
@@ -4467,7 +4466,7 @@ var cubehelixLong = cubehelix(_color_js__WEBPACK_IMPORTED_MODULE_1__/* ["default
 /* harmony export */   "sX": () => (/* reexport safe */ _value_js__WEBPACK_IMPORTED_MODULE_0__.Z)
 /* harmony export */ });
 /* harmony import */ var _value_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(1265);
-/* harmony import */ var _quantize_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(659);
+/* harmony import */ var _quantize_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(7659);
 
 
 
@@ -4567,7 +4566,7 @@ function isNumberArray(x) {
 
 /***/ }),
 
-/***/ 659:
+/***/ 7659:
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
@@ -5248,13 +5247,13 @@ Path.prototype = path.prototype = {
 
 /***/ }),
 
-/***/ 673:
+/***/ 4673:
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "IC": () => (/* reexport safe */ _sequential_multi_rainbow_js__WEBPACK_IMPORTED_MODULE_0__.ZP)
 /* harmony export */ });
-/* harmony import */ var _sequential_multi_rainbow_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(913);
+/* harmony import */ var _sequential_multi_rainbow_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(6913);
 
 
 
@@ -5302,15 +5301,15 @@ Path.prototype = path.prototype = {
 
 /***/ }),
 
-/***/ 913:
+/***/ 6913:
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "ZP": () => (/* export default binding */ __WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
 /* unused harmony exports warm, cool */
-/* harmony import */ var d3_color__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(218);
-/* harmony import */ var d3_interpolate__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(499);
+/* harmony import */ var d3_color__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(8218);
+/* harmony import */ var d3_interpolate__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(8499);
 
 
 
@@ -5792,7 +5791,7 @@ function identity(domain) {
 
 /***/ }),
 
-/***/ 348:
+/***/ 8348:
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
@@ -6067,7 +6066,7 @@ function log() {
 /* unused harmony export implicit */
 /* harmony import */ var d3_collection__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(2300);
 /* harmony import */ var _array__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(4057);
-/* harmony import */ var _init__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(348);
+/* harmony import */ var _init__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(8348);
 
 
 
@@ -11641,7 +11640,7 @@ var dependencies = {"d3-array":"1","d3-axis":"1","d3-brush":"1","d3-chord":"1","
 /* harmony import */ var d3_interpolate__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(3413);
 /* harmony import */ var d3_random__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(1638);
 /* harmony import */ var d3_scale__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(5315);
-/* harmony import */ var d3_scale_chromatic__WEBPACK_IMPORTED_MODULE_13__ = __webpack_require__(673);
+/* harmony import */ var d3_scale_chromatic__WEBPACK_IMPORTED_MODULE_13__ = __webpack_require__(4673);
 /* harmony import */ var d3_selection__WEBPACK_IMPORTED_MODULE_14__ = __webpack_require__(9825);
 /* harmony import */ var d3_shape__WEBPACK_IMPORTED_MODULE_15__ = __webpack_require__(1016);
 /* harmony import */ var d3_transition__WEBPACK_IMPORTED_MODULE_16__ = __webpack_require__(2263);

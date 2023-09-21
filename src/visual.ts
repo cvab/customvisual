@@ -31,12 +31,11 @@ export class Visual implements IVisual {
     const svgWidth = options.viewport.width;
     const canvasHeight = options.viewport.height;
     const radius = Math.min(svgWidth, canvasHeight) / 6;
-    const dataView = options.dataViews[0];
-    const valuess = dataView.categorical.values[0];
+    const dataView = options.dataViews[0].categorical;
+    const valuess = dataView.values[0];
 
-    // Sample data received from Power BI (replace with your actual data)
-    const parents = dataView.categorical.categories[0].values;
-    const children = options.dataViews[0].categorical.categories[1].values;
+    const parents = dataView.categories[0].values;
+    const children = dataView.categories[1].values;
     const values = valuess.values;
     const hierarchicalData = {
       name: "sunburst",
@@ -52,8 +51,7 @@ export class Visual implements IVisual {
         };
         hierarchicalData.children.push(newParent);
         const filteredChildArray = children.filter((child, index) => `${parents[index]}` === `${parent}`);
-        const filteredValuedArray = values.filter((value, index) => `${parents[index]}` === `${parent}`);
-console.log("filtered",filteredChildArray)
+        const filteredValuedArray = values.filter((value, index) => `${parents[index]}` === `${parent}`);console.log("filtered",filteredChildArray)
         filteredChildArray.forEach((el, index) => {
           const newChild = {
             name: el,
@@ -65,7 +63,7 @@ console.log("filtered",filteredChildArray)
     });
     console.log(hierarchicalData)
   
-    const color = d3.scaleOrdinal(d3.quantize(d3.interpolateRainbow, dataView.categorical.categories.length+1));
+    const color = d3.scaleOrdinal(d3.quantize(d3.interpolateRainbow, dataView.categories.length+1));
     // Compute the layout.
     const hierarchy = d3.hierarchy(hierarchicalData)
       .sum((d: any) => d.value)
