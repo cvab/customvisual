@@ -1,8 +1,13 @@
 {
     "dataRoles": [
         {
-            "displayName": "Category Data",
-            "name": "category",
+            "displayName": "parent",
+            "name": "parent",
+            "kind": "Grouping"
+        },
+        {
+            "displayName": "child",
+            "name": "child",
             "kind": "Grouping"
         },
         {
@@ -42,7 +47,7 @@
                         "fill": {}
                     }
                 },
-                 "fontSize": {
+                "fontSize": {
                     "type": {
                         "formatting": {
                             "fontSize": true
@@ -56,9 +61,19 @@
         {
             "categorical": {
                 "categories": {
-                    "for": {
-                        "in": "category"
-                    },
+                    "select": [
+                        {
+                            "for": {
+                                "in": "parent"
+                            }
+                        },
+                        
+                        {
+                            "for": {
+                                "in": "child"
+                            }
+                        }
+                    ],
                     "dataReductionAlgorithm": {
                         "top": {}
                     }

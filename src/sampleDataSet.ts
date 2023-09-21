@@ -1,4 +1,49 @@
-export const sunburstData={
+export const sunburstData = {
+
+  name: "sunburst",
+  children: [
+
+    {
+      name: "parent 1",
+      children: [
+        {
+          name: "child 1",
+          value: 1000,
+        },
+        {
+          name: "child 2",
+          value: 1500,
+        },
+      ],
+
+    },
+
+    {
+
+      name: "parent 2",
+
+      children: [
+
+        {
+          name: "child 3",
+          value: 1000,
+        },
+
+        {
+          name: "child 4",
+          value: 1500,
+        },
+
+      ],
+
+    },
+
+  ],
+
+};
+
+
+export const sunburstDatato={
   "name": "flare",
   "children": [
    {
