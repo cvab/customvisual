@@ -37,6 +37,7 @@ export class Visual implements IVisual {
     const parents = dataView.categories[0].values;
     const children = dataView.categories[1].values;
     const values = valuess.values;
+    
     const hierarchicalData = {
       name: "sunburst",
       children: [],
