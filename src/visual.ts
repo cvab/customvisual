@@ -43,7 +43,6 @@ export class Visual implements IVisual {
     };
     parents.forEach((parent) => {
       const existingParent = hierarchicalData.children.find((item) => item.name === parent);
-      console.log("existing ",parent)
       if (!existingParent) {
         const newParent = {
           name: parent,
@@ -51,7 +50,7 @@ export class Visual implements IVisual {
         };
         hierarchicalData.children.push(newParent);
         const filteredChildArray = children.filter((child, index) => `${parents[index]}` === `${parent}`);
-        const filteredValuedArray = values.filter((value, index) => `${parents[index]}` === `${parent}`);console.log("filtered",filteredChildArray)
+        const filteredValuedArray = values.filter((value, index) => `${parents[index]}` === `${parent}`);
         filteredChildArray.forEach((el, index) => {
           const newChild = {
             name: el,
@@ -62,8 +61,48 @@ export class Visual implements IVisual {
       }
     });
     console.log(hierarchicalData)
-  
-    const color = d3.scaleOrdinal(d3.quantize(d3.interpolateRainbow, dataView.categories.length+1));
+
+
+// const parents = dataView.categories[0].values;
+// const children = dataView.categories[1].values;
+// const values = valuess.values;
+// const additionalColumn = dataView.additionalColumn; // Add your additional column here
+
+// const hierarchicalData = {
+//   name: "sunburst",
+//   children: [],
+// };
+
+// parents.forEach((parent, index) => {
+//   const existingParent = hierarchicalData.children.find((item) => item.name === parent);
+//   if (!existingParent) {
+//     const newParent = {
+//       name: parent,
+//       children: [],
+//     };
+//     hierarchicalData.children.push(newParent);
+
+//     const filteredChildArray = children.filter((child, idx) => `${parents[idx]}` === `${parent}`);
+//     const filteredValuedArray = values.filter((value, idx) => `${parents[idx]}` === `${parent}`);
+//     const additionalColumnValue = additionalColumn[index]; // Get the corresponding additional column value
+
+//     filteredChildArray.forEach((el, idx) => {
+//       const newChild = {
+//         name: el,
+//         value: filteredValuedArray[idx],
+//         additionalColumn: additionalColumnValue, // Store the additional column value
+//       };
+//       newParent.children.push(newChild);
+//     });
+//   }
+// });
+
+// console.log(hierarchicalData);
+
+
+
+
+    const color = d3.scaleOrdinal(d3.quantize(d3.interpolateRainbow, dataView.categories.length + 1));
     // Compute the layout.
     const hierarchy = d3.hierarchy(hierarchicalData)
       .sum((d: any) => d.value)
@@ -93,8 +132,8 @@ export class Visual implements IVisual {
       .selectAll("path")
       .data(root.descendants().slice(1))
       .join("path")
-      .attr("fill", (d:any) => { while(d.depth > 1) d = d.parent; return color(d.data.name); })
-      .attr("fill-opacity", (d: any) => arcVisible(d.current) ? (d.children ? 1 : 0.6) : 0)
+      .attr("fill", (d: any) => { while (d.depth > 1) d = d.parent; return color(d.data.name); })
+      .attr("fill-opacity", (d: any) => arcVisible(d.current) ? (d.children ? 1 : 0.5) : 0)
       .attr("pointer-events", (d: any) => arcVisible(d.current) ? "auto" : "none")
       .attr("d", (d: any) => arc(d.current))
     path.filter((d: any) => d.children)
@@ -127,7 +166,7 @@ export class Visual implements IVisual {
       .on("click", clicked);
     function clicked(p: { parent: any; x0: number; x1: number; depth: number; }) {
       parent.datum(p.parent || root);
-    
+
       root.each((d: any) => d.target = {
         x0: Math.max(0, Math.min(1, (d.x0 - p.x0) / (p.x1 - p.x0))) * 2 * Math.PI,
         x1: Math.max(0, Math.min(1, (d.x1 - p.x0) / (p.x1 - p.x0))) * 2 * Math.PI,

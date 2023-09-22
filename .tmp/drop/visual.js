@@ -130,7 +130,6 @@ class Visual {
         };
         parents.forEach((parent) => {
             const existingParent = hierarchicalData.children.find((item) => item.name === parent);
-            console.log("existing ", parent);
             if (!existingParent) {
                 const newParent = {
                     name: parent,
@@ -139,7 +138,6 @@ class Visual {
                 hierarchicalData.children.push(newParent);
                 const filteredChildArray = children.filter((child, index) => `${parents[index]}` === `${parent}`);
                 const filteredValuedArray = values.filter((value, index) => `${parents[index]}` === `${parent}`);
-                console.log("filtered", filteredChildArray);
                 filteredChildArray.forEach((el, index) => {
                     const newChild = {
                         name: el,
@@ -150,6 +148,36 @@ class Visual {
             }
         });
         console.log(hierarchicalData);
+        // const parents = dataView.categories[0].values;
+        // const children = dataView.categories[1].values;
+        // const values = valuess.values;
+        // const additionalColumn = dataView.additionalColumn; // Add your additional column here
+        // const hierarchicalData = {
+        //   name: "sunburst",
+        //   children: [],
+        // };
+        // parents.forEach((parent, index) => {
+        //   const existingParent = hierarchicalData.children.find((item) => item.name === parent);
+        //   if (!existingParent) {
+        //     const newParent = {
+        //       name: parent,
+        //       children: [],
+        //     };
+        //     hierarchicalData.children.push(newParent);
+        //     const filteredChildArray = children.filter((child, idx) => `${parents[idx]}` === `${parent}`);
+        //     const filteredValuedArray = values.filter((value, idx) => `${parents[idx]}` === `${parent}`);
+        //     const additionalColumnValue = additionalColumn[index]; // Get the corresponding additional column value
+        //     filteredChildArray.forEach((el, idx) => {
+        //       const newChild = {
+        //         name: el,
+        //         value: filteredValuedArray[idx],
+        //         additionalColumn: additionalColumnValue, // Store the additional column value
+        //       };
+        //       newParent.children.push(newChild);
+        //     });
+        //   }
+        // });
+        // console.log(hierarchicalData);
         const color = d3__WEBPACK_IMPORTED_MODULE_1__/* .scaleOrdinal */ .PKp(d3__WEBPACK_IMPORTED_MODULE_1__/* .quantize */ .q$2(d3__WEBPACK_IMPORTED_MODULE_1__/* .interpolateRainbow */ .ICD, dataView.categories.length + 1));
         // Compute the layout.
         const hierarchy = d3__WEBPACK_IMPORTED_MODULE_1__/* .hierarchy */ .bT9(hierarchicalData)
@@ -178,7 +206,7 @@ class Visual {
             .join("path")
             .attr("fill", (d) => { while (d.depth > 1)
             d = d.parent; return color(d.data.name); })
-            .attr("fill-opacity", (d) => arcVisible(d.current) ? (d.children ? 1 : 0.6) : 0)
+            .attr("fill-opacity", (d) => arcVisible(d.current) ? (d.children ? 1 : 0.5) : 0)
             .attr("pointer-events", (d) => arcVisible(d.current) ? "auto" : "none")
             .attr("d", (d) => arc(d.current));
         path.filter((d) => d.children)
