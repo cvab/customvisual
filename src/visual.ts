@@ -25,7 +25,7 @@ export class Visual implements IVisual {
   }
 
   public update(options: VisualUpdateOptions) {
-
+console.log("options",options)
     this.sunburstchartsvg.selectAll("*").remove();
     this.formattingSettings = this.formattingSettingsService.populateFormattingSettingsModel(VisualFormattingSettingsModel, options.dataViews);
     const svgWidth = options.viewport.width;
@@ -35,8 +35,11 @@ export class Visual implements IVisual {
     const valuess = dataView.values[0];
 
     const parents = dataView.categories[0].values;
+    console.log("parents",parents)
     const children = dataView.categories[1].values;
+    console.log("children",children)
     const values = valuess.values;
+    console.log("values",values)
     
     const hierarchicalData = {
       name: "sunburst",
@@ -61,48 +64,8 @@ export class Visual implements IVisual {
         });
       }
     });
-    console.log(hierarchicalData)
-
-
-// const parents = dataView.categories[0].values;
-// const children = dataView.categories[1].values;
-// const values = valuess.values;
-// const additionalColumn = dataView.additionalColumn; // Add your additional column here
-
-// const hierarchicalData = {
-//   name: "sunburst",
-//   children: [],
-// };
-
-// parents.forEach((parent, index) => {
-//   const existingParent = hierarchicalData.children.find((item) => item.name === parent);
-//   if (!existingParent) {
-//     const newParent = {
-//       name: parent,
-//       children: [],
-//     };
-//     hierarchicalData.children.push(newParent);
-
-//     const filteredChildArray = children.filter((child, idx) => `${parents[idx]}` === `${parent}`);
-//     const filteredValuedArray = values.filter((value, idx) => `${parents[idx]}` === `${parent}`);
-//     const additionalColumnValue = additionalColumn[index]; // Get the corresponding additional column value
-
-//     filteredChildArray.forEach((el, idx) => {
-//       const newChild = {
-//         name: el,
-//         value: filteredValuedArray[idx],
-//         additionalColumn: additionalColumnValue, // Store the additional column value
-//       };
-//       newParent.children.push(newChild);
-//     });
-//   }
-// });
-
-// console.log(hierarchicalData);
-
-
-
-
+    //console.log(hierarchicalData)
+    
     const color = d3.scaleOrdinal(d3.quantize(d3.interpolateRainbow, dataView.categories.length + 1));
     // Compute the layout.
     const hierarchy = d3.hierarchy(hierarchicalData)
