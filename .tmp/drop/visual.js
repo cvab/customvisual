@@ -107,14 +107,16 @@ class VisualFormattingSettingsModel extends FormattingSettingsModel {
 
 
 
+
 class Visual {
     constructor(options) {
         this.formattingSettingsService = new powerbi_visuals_utils_formattingmodel__WEBPACK_IMPORTED_MODULE_2__/* ["default"] */ .Z();
+        this.host = options.host;
+        this.selectionManager = this.host.createSelectionManager();
         this.target = options.element;
         this.sunburstchartsvg = d3__WEBPACK_IMPORTED_MODULE_1__/* .select */ .Ys(this.target).append("svg").classed("sunburstchartsvg", true);
     }
     update(options) {
-        console.log("options", options);
         this.sunburstchartsvg.selectAll("*").remove();
         this.formattingSettings = this.formattingSettingsService.populateFormattingSettingsModel(_settings__WEBPACK_IMPORTED_MODULE_0__/* .VisualFormattingSettingsModel */ .E, options.dataViews);
         const svgWidth = options.viewport.width;
@@ -122,22 +124,24 @@ class Visual {
         const radius = Math.min(svgWidth, canvasHeight) / 6;
         const dataView = options.dataViews[0].categorical;
         const valuess = dataView.values[0];
+        const categories = dataView.categories;
+        console.log(categories);
         const parents = dataView.categories[0].values;
-        console.log("parents", parents);
         const children = dataView.categories[1].values;
-        console.log("children", children);
         const values = valuess.values;
-        console.log("values", values);
         const hierarchicalData = {
             name: "sunburst",
             children: [],
         };
-        parents.forEach((parent) => {
+        console.log(hierarchicalData);
+        parents.forEach((parent, categoryIndex) => {
             const existingParent = hierarchicalData.children.find((item) => item.name === parent);
+            const categorySelectionId = this.host.createSelectionIdBuilder().withCategory(categories[0], categoryIndex).createSelectionId();
             if (!existingParent) {
                 const newParent = {
                     name: parent,
                     children: [],
+                    selectionId: categorySelectionId,
                 };
                 hierarchicalData.children.push(newParent);
                 const filteredChildArray = children.filter((child, index) => `${parents[index]}` === `${parent}`);
@@ -151,7 +155,6 @@ class Visual {
                 });
             }
         });
-        //console.log(hierarchicalData)
         const color = d3__WEBPACK_IMPORTED_MODULE_1__/* .scaleOrdinal */ .PKp(d3__WEBPACK_IMPORTED_MODULE_1__/* .quantize */ .q$2(d3__WEBPACK_IMPORTED_MODULE_1__/* .interpolateRainbow */ .ICD, dataView.categories.length + 1));
         // Compute the layout.
         const hierarchy = d3__WEBPACK_IMPORTED_MODULE_1__/* .hierarchy */ .bT9(hierarchicalData)
@@ -175,6 +178,7 @@ class Visual {
             .style("font-size", canvasHeight / 50)
             .style("cursor", "auto");
         const path = svg.append("g")
+            .classed("bar", true)
             .selectAll("path")
             .data(root.descendants().slice(1))
             .join("path")
@@ -185,7 +189,13 @@ class Visual {
             .attr("d", (d) => arc(d.current));
         path.filter((d) => d.children)
             .classed("path-filter", true)
-            .on("click", clicked);
+            // .on("click", clicked);
+            .on("click", (d) => {
+            this.selectionManager.select(d.data.selectionId).then((ids) => {
+                this.syncSelectionState((0,d3__WEBPACK_IMPORTED_MODULE_1__/* .selectAll */ .td_)(".bar"), ids);
+            });
+            console.log(d);
+        });
         const format = d3__WEBPACK_IMPORTED_MODULE_1__/* .format */ .WUZ(",d");
         path.append("title")
             .classed("title-text", true)
@@ -206,36 +216,42 @@ class Visual {
             .datum(root)
             .attr("r", radius)
             .attr("fill", "none")
-            .attr("pointer-events", "all")
-            .on("click", clicked);
-        function clicked(p) {
-            parent.datum(p.parent || root);
-            root.each((d) => d.target = {
-                x0: Math.max(0, Math.min(1, (d.x0 - p.x0) / (p.x1 - p.x0))) * 2 * Math.PI,
-                x1: Math.max(0, Math.min(1, (d.x1 - p.x0) / (p.x1 - p.x0))) * 2 * Math.PI,
-                y0: Math.max(0, d.y0 - p.depth),
-                y1: Math.max(0, d.y1 - p.depth)
-            });
-            const t = svg.transition().duration(750);
-            path.transition(t)
-                .tween("{ children: hierarchicalData.categories }", (d) => {
-                const i = d3__WEBPACK_IMPORTED_MODULE_1__/* .interpolate */ .sXR(d.current, d.target);
-                return t => (d.current = i(t));
-            })
-                .filter(function (d) {
-                return d3__WEBPACK_IMPORTED_MODULE_1__/* .select */ .Ys(this).attr("fill-opacity") !== null || arcVisible(d.target);
-            })
-                .attr("fill-opacity", (d) => arcVisible(d.target) ? (d.children ? 1 : 0.6) : 0)
-                .attr("pointer-events", (d) => arcVisible(d.target) ? "auto" : "none")
-                .attrTween("d", (d) => () => arc(d.current));
-            label.filter(function (d) {
-                // Explicitly specify the type of 'd' as any, or the appropriate type if known
-                const hierarchyNode = d;
-                return +this.getAttribute("fill-opacity") !== 0 || labelVisible(hierarchyNode.target);
-            }).transition(t)
-                .attr("fill-opacity", (d) => +labelVisible(d.target))
-                .attrTween("transform", (d) => () => labelTransform(d.current));
-        }
+            .attr("pointer-events", "all");
+        // .on("click", clicked);
+        // .on("click", (d: any) => {
+        //   this.selectionManager.select(d.selectionId).then((ids: ISelectionId[]) => {
+        //     this.syncSelectionState(selectAll(".bar"), ids);
+        //   });
+        // });
+        // function clicked(p: { parent: any; x0: number; x1: number; depth: number; }) {
+        //   parent.datum(p.parent || root);
+        //   root.each((d: any) => d.target = {
+        //     x0: Math.max(0, Math.min(1, (d.x0 - p.x0) / (p.x1 - p.x0))) * 2 * Math.PI,
+        //     x1: Math.max(0, Math.min(1, (d.x1 - p.x0) / (p.x1 - p.x0))) * 2 * Math.PI,
+        //     y0: Math.max(0, d.y0 - p.depth),
+        //     y1: Math.max(0, d.y1 - p.depth)
+        //   }
+        //   );
+        //   const t = svg.transition().duration(750);
+        //   path.transition(t)
+        //     .tween("{ children: hierarchicalData.categories }", (d: any) => {
+        //       const i = d3.interpolate(d.current, d.target);
+        //       return t => (d.current = i(t));
+        //     })
+        //     .filter(function (d: any) {
+        //       return d3.select(this).attr("fill-opacity") !== null || arcVisible(d.target);
+        //     })
+        //     .attr("fill-opacity", (d: any) => arcVisible(d.target) ? (d.children ? 1 : 0.6) : 0)
+        //     .attr("pointer-events", (d: any) => arcVisible(d.target) ? "auto" : "none")
+        //     .attrTween("d", (d: any) => () => arc(d.current));
+        //   label.filter(function (d) {
+        //     // Explicitly specify the type of 'd' as any, or the appropriate type if known
+        //     const hierarchyNode: any = d;
+        //     return +(<SVGTextElement>this).getAttribute("fill-opacity") !== 0 || labelVisible(hierarchyNode.target);
+        //   }).transition(t)
+        //     .attr("fill-opacity", (d: any) => +labelVisible(d.target))
+        //     .attrTween("transform", (d: any) => () => labelTransform(d.current));
+        // }
         function arcVisible(d) {
             return d.y1 <= 3 && d.y0 >= 1 && d.x1 > d.x0;
         }
@@ -247,6 +263,24 @@ class Visual {
             const y = (d.y0 + d.y1) / 2 * radius;
             return `rotate(${x - 90}) translate(${y},0) rotate(${x < 180 ? 0 : 180})`;
         }
+    }
+    syncSelectionState(barSelection, selectionIds) {
+        if (!barSelection || !selectionIds) {
+            return;
+        }
+        if (selectionIds.length === 0) {
+            barSelection.style("opacity", 1);
+            return;
+        }
+        barSelection.each((hierarchicalData, i, e) => {
+            const selectionId = hierarchicalData.children.SelectionId;
+            const isSelected = selectionIds.some((currentSelectionId) => {
+                return currentSelectionId.includes(selectionId);
+            });
+            const opacity = isSelected ? 1 : 0.5;
+            const currentBar = (0,d3__WEBPACK_IMPORTED_MODULE_1__/* .select */ .Ys)(e[i]);
+            currentBar.style("opacity", opacity);
+        });
     }
     /*
      * Returns properties pane formatting model content hierarchies, properties and latest formatting values, Then populate properties pane.
@@ -4259,39 +4293,6 @@ function leastCommonAncestor(a, b) {
 
 /***/ }),
 
-/***/ 8122:
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "M": () => (/* binding */ genericArray)
-/* harmony export */ });
-/* harmony import */ var _value_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(1265);
-
-
-
-/* harmony default export */ function __WEBPACK_DEFAULT_EXPORT__(a, b) {
-  return (isNumberArray(b) ? numberArray : genericArray)(a, b);
-}
-
-function genericArray(a, b) {
-  var nb = b ? b.length : 0,
-      na = a ? Math.min(nb, a.length) : 0,
-      x = new Array(na),
-      c = new Array(nb),
-      i;
-
-  for (i = 0; i < na; ++i) x[i] = (0,_value_js__WEBPACK_IMPORTED_MODULE_0__/* ["default"] */ .Z)(a[i], b[i]);
-  for (; i < nb; ++i) c[i] = b[i];
-
-  return function(t) {
-    for (i = 0; i < na; ++i) c[i] = x[i](t);
-    return c;
-  };
-}
-
-
-/***/ }),
-
 /***/ 9885:
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
@@ -4444,31 +4445,13 @@ var cubehelixLong = cubehelix(_color_js__WEBPACK_IMPORTED_MODULE_1__/* ["default
 
 /***/ }),
 
-/***/ 88:
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "Z": () => (/* export default binding */ __WEBPACK_DEFAULT_EXPORT__)
-/* harmony export */ });
-/* harmony default export */ function __WEBPACK_DEFAULT_EXPORT__(a, b) {
-  var d = new Date;
-  return a = +a, b = +b, function(t) {
-    return d.setTime(a * (1 - t) + b * t), d;
-  };
-}
-
-
-/***/ }),
-
 /***/ 3413:
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "q$": () => (/* reexport safe */ _quantize_js__WEBPACK_IMPORTED_MODULE_1__.Z),
-/* harmony export */   "sX": () => (/* reexport safe */ _value_js__WEBPACK_IMPORTED_MODULE_0__.Z)
+/* harmony export */   "q$": () => (/* reexport safe */ _quantize_js__WEBPACK_IMPORTED_MODULE_0__.Z)
 /* harmony export */ });
-/* harmony import */ var _value_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(1265);
-/* harmony import */ var _quantize_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(7659);
+/* harmony import */ var _quantize_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(7659);
 
 
 
@@ -4503,65 +4486,6 @@ var cubehelixLong = cubehelix(_color_js__WEBPACK_IMPORTED_MODULE_1__/* ["default
 /* harmony default export */ function __WEBPACK_DEFAULT_EXPORT__(a, b) {
   return a = +a, b = +b, function(t) {
     return a * (1 - t) + b * t;
-  };
-}
-
-
-/***/ }),
-
-/***/ 7896:
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "Z": () => (/* export default binding */ __WEBPACK_DEFAULT_EXPORT__),
-/* harmony export */   "v": () => (/* binding */ isNumberArray)
-/* harmony export */ });
-/* harmony default export */ function __WEBPACK_DEFAULT_EXPORT__(a, b) {
-  if (!b) b = [];
-  var n = a ? Math.min(b.length, a.length) : 0,
-      c = b.slice(),
-      i;
-  return function(t) {
-    for (i = 0; i < n; ++i) c[i] = a[i] * (1 - t) + b[i] * t;
-    return c;
-  };
-}
-
-function isNumberArray(x) {
-  return ArrayBuffer.isView(x) && !(x instanceof DataView);
-}
-
-
-/***/ }),
-
-/***/ 8528:
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "Z": () => (/* export default binding */ __WEBPACK_DEFAULT_EXPORT__)
-/* harmony export */ });
-/* harmony import */ var _value_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(1265);
-
-
-/* harmony default export */ function __WEBPACK_DEFAULT_EXPORT__(a, b) {
-  var i = {},
-      c = {},
-      k;
-
-  if (a === null || typeof a !== "object") a = {};
-  if (b === null || typeof b !== "object") b = {};
-
-  for (k in b) {
-    if (k in a) {
-      i[k] = (0,_value_js__WEBPACK_IMPORTED_MODULE_0__/* ["default"] */ .Z)(a[k], b[k]);
-    } else {
-      c[k] = b[k];
-    }
-  }
-
-  return function(t) {
-    for (k in i) c[k] = i[k](t);
-    return c;
   };
 }
 
@@ -4873,47 +4797,6 @@ function parseSvg(value) {
   if (!(value = svgNode.transform.baseVal.consolidate())) return _decompose_js__WEBPACK_IMPORTED_MODULE_0__/* .identity */ .y;
   value = value.matrix;
   return (0,_decompose_js__WEBPACK_IMPORTED_MODULE_0__/* ["default"] */ .Z)(value.a, value.b, value.c, value.d, value.e, value.f);
-}
-
-
-/***/ }),
-
-/***/ 1265:
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "Z": () => (/* export default binding */ __WEBPACK_DEFAULT_EXPORT__)
-/* harmony export */ });
-/* harmony import */ var d3_color__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(6372);
-/* harmony import */ var _rgb_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(3414);
-/* harmony import */ var _array_js__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(8122);
-/* harmony import */ var _date_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(88);
-/* harmony import */ var _number_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(3626);
-/* harmony import */ var _object_js__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(8528);
-/* harmony import */ var _string_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(9843);
-/* harmony import */ var _constant_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(5302);
-/* harmony import */ var _numberArray_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(7896);
-
-
-
-
-
-
-
-
-
-
-/* harmony default export */ function __WEBPACK_DEFAULT_EXPORT__(a, b) {
-  var t = typeof b, c;
-  return b == null || t === "boolean" ? (0,_constant_js__WEBPACK_IMPORTED_MODULE_0__/* ["default"] */ .Z)(b)
-      : (t === "number" ? _number_js__WEBPACK_IMPORTED_MODULE_1__/* ["default"] */ .Z
-      : t === "string" ? ((c = (0,d3_color__WEBPACK_IMPORTED_MODULE_2__/* ["default"] */ .ZP)(b)) ? (b = c, _rgb_js__WEBPACK_IMPORTED_MODULE_3__/* ["default"] */ .ZP) : _string_js__WEBPACK_IMPORTED_MODULE_4__/* ["default"] */ .Z)
-      : b instanceof d3_color__WEBPACK_IMPORTED_MODULE_2__/* ["default"] */ .ZP ? _rgb_js__WEBPACK_IMPORTED_MODULE_3__/* ["default"] */ .ZP
-      : b instanceof Date ? _date_js__WEBPACK_IMPORTED_MODULE_5__/* ["default"] */ .Z
-      : (0,_numberArray_js__WEBPACK_IMPORTED_MODULE_6__/* .isNumberArray */ .v)(b) ? _numberArray_js__WEBPACK_IMPORTED_MODULE_6__/* ["default"] */ .Z
-      : Array.isArray(b) ? _array_js__WEBPACK_IMPORTED_MODULE_7__/* .genericArray */ .M
-      : typeof b.valueOf !== "function" && typeof b.toString !== "function" || isNaN(b) ? _object_js__WEBPACK_IMPORTED_MODULE_8__/* ["default"] */ .Z
-      : _number_js__WEBPACK_IMPORTED_MODULE_1__/* ["default"] */ .Z)(a, b);
 }
 
 
@@ -6812,9 +6695,11 @@ function creatorFixed(fullname) {
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "Ys": () => (/* reexport safe */ _select__WEBPACK_IMPORTED_MODULE_0__.Z)
+/* harmony export */   "Ys": () => (/* reexport safe */ _select__WEBPACK_IMPORTED_MODULE_0__.Z),
+/* harmony export */   "td": () => (/* reexport safe */ _selectAll__WEBPACK_IMPORTED_MODULE_1__.Z)
 /* harmony export */ });
 /* harmony import */ var _select__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(4017);
+/* harmony import */ var _selectAll__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(628);
 
 
 
@@ -6903,6 +6788,24 @@ var xhtml = "http://www.w3.org/1999/xhtml";
   return typeof selector === "string"
       ? new _selection_index__WEBPACK_IMPORTED_MODULE_0__/* .Selection */ .Y1([[document.querySelector(selector)]], [document.documentElement])
       : new _selection_index__WEBPACK_IMPORTED_MODULE_0__/* .Selection */ .Y1([[selector]], _selection_index__WEBPACK_IMPORTED_MODULE_0__/* .root */ .Jz);
+}
+
+
+/***/ }),
+
+/***/ 628:
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "Z": () => (/* export default binding */ __WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var _selection_index__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(3933);
+
+
+/* harmony default export */ function __WEBPACK_DEFAULT_EXPORT__(selector) {
+  return typeof selector === "string"
+      ? new _selection_index__WEBPACK_IMPORTED_MODULE_0__/* .Selection */ .Y1([document.querySelectorAll(selector)], [document.documentElement])
+      : new _selection_index__WEBPACK_IMPORTED_MODULE_0__/* .Selection */ .Y1([selector == null ? [] : selector], _selection_index__WEBPACK_IMPORTED_MODULE_0__/* .root */ .Jz);
 }
 
 
@@ -11626,7 +11529,7 @@ var dependencies = {"d3-array":"1","d3-axis":"1","d3-brush":"1","d3-chord":"1","
 /* harmony export */   "Ys": () => (/* reexport safe */ d3_selection__WEBPACK_IMPORTED_MODULE_14__.Ys),
 /* harmony export */   "bT9": () => (/* reexport safe */ d3_hierarchy__WEBPACK_IMPORTED_MODULE_9__.bT),
 /* harmony export */   "q$2": () => (/* reexport safe */ d3_interpolate__WEBPACK_IMPORTED_MODULE_10__.q$),
-/* harmony export */   "sXR": () => (/* reexport safe */ d3_interpolate__WEBPACK_IMPORTED_MODULE_10__.sX),
+/* harmony export */   "td_": () => (/* reexport safe */ d3_selection__WEBPACK_IMPORTED_MODULE_14__.td),
 /* harmony export */   "uKc": () => (/* reexport safe */ d3_hierarchy__WEBPACK_IMPORTED_MODULE_9__.uK)
 /* harmony export */ });
 /* harmony import */ var _dist_package_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(2156);

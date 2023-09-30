@@ -9,23 +9,37 @@ import VisualUpdateOptions = powerbi.extensibility.visual.VisualUpdateOptions;
 import IVisual = powerbi.extensibility.visual.IVisual;
 import { VisualFormattingSettingsModel } from "./settings";
 import * as d3 from 'd3';
+import ISelectionManager = powerbi.extensibility.ISelectionManager;
+import IVisualHost = powerbi.extensibility.visual.IVisualHost;
+import ISelectionId = powerbi.visuals.ISelectionId;
+import { select, selectAll } from "d3";
+
+interface IDatapoint {
+  country: string;
+  value: number;
+  selectionId: ISelectionId;
+}
 
 export class Visual implements IVisual {
   private target: HTMLElement;
   private formattingSettings: VisualFormattingSettingsModel;
   private formattingSettingsService: FormattingSettingsService;
   sunburstchartsvg: d3.Selection<SVGSVGElement, unknown, null, undefined>;
+  private selectionManager: ISelectionManager;
+  public host: IVisualHost;
 
   constructor(options: VisualConstructorOptions) {
 
     this.formattingSettingsService = new FormattingSettingsService();
+    this.host = options.host;
+    this.selectionManager = this.host.createSelectionManager();
     this.target = options.element;
     this.sunburstchartsvg = d3.select(this.target).append("svg").classed("sunburstchartsvg", true);
 
   }
 
   public update(options: VisualUpdateOptions) {
-console.log("options",options)
+
     this.sunburstchartsvg.selectAll("*").remove();
     this.formattingSettings = this.formattingSettingsService.populateFormattingSettingsModel(VisualFormattingSettingsModel, options.dataViews);
     const svgWidth = options.viewport.width;
@@ -33,25 +47,33 @@ console.log("options",options)
     const radius = Math.min(svgWidth, canvasHeight) / 6;
     const dataView = options.dataViews[0].categorical;
     const valuess = dataView.values[0];
-
-    const parents = dataView.categories[0].values;
-    console.log("parents",parents)
-    const children = dataView.categories[1].values;
-    console.log("children",children)
-    const values = valuess.values;
-    console.log("values",values)
+    const categories=dataView.categories;
+    console.log(categories)
+    const parents = dataView.categories[0].values as string[];
+   
+    const children = dataView.categories[1].values as string[];
+    
+    const values = valuess.values as number[];
+    
     
     const hierarchicalData = {
       name: "sunburst",
-      children: [],
+      children :[],
     };
-    parents.forEach((parent) => {
+    
+console.log(hierarchicalData)
+    parents.forEach((parent,categoryIndex) => {
       const existingParent = hierarchicalData.children.find((item) => item.name === parent);
+      const categorySelectionId = this.host.createSelectionIdBuilder().withCategory(categories[0], categoryIndex).createSelectionId();
+ 
       if (!existingParent) {
+       
         const newParent = {
           name: parent,
           children: [],
+          selectionId:categorySelectionId,
         };
+        
         hierarchicalData.children.push(newParent);
         const filteredChildArray = children.filter((child, index) => `${parents[index]}` === `${parent}`);
         const filteredValuedArray = values.filter((value, index) => `${parents[index]}` === `${parent}`);
@@ -63,8 +85,9 @@ console.log("options",options)
           newParent.children.push(newChild);
         });
       }
+      
+     
     });
-    //console.log(hierarchicalData)
     
     const color = d3.scaleOrdinal(d3.quantize(d3.interpolateRainbow, dataView.categories.length + 1));
     // Compute the layout.
@@ -93,6 +116,7 @@ console.log("options",options)
       .style("cursor", "auto");
 
     const path = svg.append("g")
+    .classed("bar",true)
       .selectAll("path")
       .data(root.descendants().slice(1))
       .join("path")
@@ -102,7 +126,14 @@ console.log("options",options)
       .attr("d", (d: any) => arc(d.current))
     path.filter((d: any) => d.children)
       .classed("path-filter", true)
-      .on("click", clicked);
+      // .on("click", clicked);
+      .on("click", (d: any) => {
+        this.selectionManager.select(d.data.selectionId).then((ids: ISelectionId[]) => {
+          this.syncSelectionState(selectAll(".bar"), ids);
+        });
+      console.log(d)
+      });
+
 
     const format = d3.format(",d");
     path.append("title")
@@ -127,39 +158,44 @@ console.log("options",options)
       .attr("r", radius)
       .attr("fill", "none")
       .attr("pointer-events", "all")
-      .on("click", clicked);
-    function clicked(p: { parent: any; x0: number; x1: number; depth: number; }) {
-      parent.datum(p.parent || root);
+      // .on("click", clicked);
+      // .on("click", (d: any) => {
+      //   this.selectionManager.select(d.selectionId).then((ids: ISelectionId[]) => {
+      //     this.syncSelectionState(selectAll(".bar"), ids);
+      //   });
+      // });
+    // function clicked(p: { parent: any; x0: number; x1: number; depth: number; }) {
+    //   parent.datum(p.parent || root);
 
-      root.each((d: any) => d.target = {
-        x0: Math.max(0, Math.min(1, (d.x0 - p.x0) / (p.x1 - p.x0))) * 2 * Math.PI,
-        x1: Math.max(0, Math.min(1, (d.x1 - p.x0) / (p.x1 - p.x0))) * 2 * Math.PI,
-        y0: Math.max(0, d.y0 - p.depth),
-        y1: Math.max(0, d.y1 - p.depth)
-      }
-      );
+    //   root.each((d: any) => d.target = {
+    //     x0: Math.max(0, Math.min(1, (d.x0 - p.x0) / (p.x1 - p.x0))) * 2 * Math.PI,
+    //     x1: Math.max(0, Math.min(1, (d.x1 - p.x0) / (p.x1 - p.x0))) * 2 * Math.PI,
+    //     y0: Math.max(0, d.y0 - p.depth),
+    //     y1: Math.max(0, d.y1 - p.depth)
+    //   }
+    //   );
 
-      const t = svg.transition().duration(750);
-      path.transition(t)
-        .tween("{ children: hierarchicalData.categories }", (d: any) => {
-          const i = d3.interpolate(d.current, d.target);
-          return t => (d.current = i(t));
-        })
-        .filter(function (d: any) {
-          return d3.select(this).attr("fill-opacity") !== null || arcVisible(d.target);
-        })
-        .attr("fill-opacity", (d: any) => arcVisible(d.target) ? (d.children ? 1 : 0.6) : 0)
-        .attr("pointer-events", (d: any) => arcVisible(d.target) ? "auto" : "none")
-        .attrTween("d", (d: any) => () => arc(d.current));
+    //   const t = svg.transition().duration(750);
+    //   path.transition(t)
+    //     .tween("{ children: hierarchicalData.categories }", (d: any) => {
+    //       const i = d3.interpolate(d.current, d.target);
+    //       return t => (d.current = i(t));
+    //     })
+    //     .filter(function (d: any) {
+    //       return d3.select(this).attr("fill-opacity") !== null || arcVisible(d.target);
+    //     })
+    //     .attr("fill-opacity", (d: any) => arcVisible(d.target) ? (d.children ? 1 : 0.6) : 0)
+    //     .attr("pointer-events", (d: any) => arcVisible(d.target) ? "auto" : "none")
+    //     .attrTween("d", (d: any) => () => arc(d.current));
 
-      label.filter(function (d) {
-        // Explicitly specify the type of 'd' as any, or the appropriate type if known
-        const hierarchyNode: any = d;
-        return +(<SVGTextElement>this).getAttribute("fill-opacity") !== 0 || labelVisible(hierarchyNode.target);
-      }).transition(t)
-        .attr("fill-opacity", (d: any) => +labelVisible(d.target))
-        .attrTween("transform", (d: any) => () => labelTransform(d.current));
-    }
+    //   label.filter(function (d) {
+    //     // Explicitly specify the type of 'd' as any, or the appropriate type if known
+    //     const hierarchyNode: any = d;
+    //     return +(<SVGTextElement>this).getAttribute("fill-opacity") !== 0 || labelVisible(hierarchyNode.target);
+    //   }).transition(t)
+    //     .attr("fill-opacity", (d: any) => +labelVisible(d.target))
+    //     .attrTween("transform", (d: any) => () => labelTransform(d.current));
+    // }
 
     function arcVisible(d: { y1: number; y0: number; x1: number; x0: number; }) {
       return d.y1 <= 3 && d.y0 >= 1 && d.x1 > d.x0;
@@ -176,6 +212,26 @@ console.log("options",options)
     }
   }
 
+  private syncSelectionState(barSelection: d3.Selection<d3.BaseType, unknown, HTMLElement, any>, selectionIds: ISelectionId[]) {
+    if (!barSelection || !selectionIds) {
+      return;
+    }
+  
+    if (selectionIds.length === 0) {
+      barSelection.style("opacity", 1);
+      return;
+    }
+  
+    barSelection.each((hierarchicalData: any, i, e) => {
+      const selectionId = hierarchicalData.children.SelectionId;
+      const isSelected = selectionIds.some((currentSelectionId) => {
+        return currentSelectionId.includes(selectionId);
+      });
+      const opacity = isSelected ? 1 : 0.5;
+      const currentBar = select(e[i]);
+      currentBar.style("opacity", opacity);
+    });
+  }
 
   /*
    * Returns properties pane formatting model content hierarchies, properties and latest formatting values, Then populate properties pane.
