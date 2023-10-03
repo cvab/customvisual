@@ -14,12 +14,6 @@ import IVisualHost = powerbi.extensibility.visual.IVisualHost;
 import ISelectionId = powerbi.visuals.ISelectionId;
 import { select, selectAll } from "d3";
 
-interface IDatapoint {
-  country: string;
-  value: number;
-  selectionId: ISelectionId;
-}
-
 export class Visual implements IVisual {
   private target: HTMLElement;
   private formattingSettings: VisualFormattingSettingsModel;
@@ -60,20 +54,21 @@ export class Visual implements IVisual {
       name: "sunburst",
       children :[],
     };
+
+    console.log("hierarchicalData",hierarchicalData)
     
-console.log(hierarchicalData)
     parents.forEach((parent,categoryIndex) => {
+      
       const existingParent = hierarchicalData.children.find((item) => item.name === parent);
-      const categorySelectionId = this.host.createSelectionIdBuilder().withCategory(categories[0], categoryIndex).createSelectionId();
- 
       if (!existingParent) {
-       
+        const categorySelectionId = this.host.createSelectionIdBuilder().withCategory(categories[0], categoryIndex).createSelectionId();
         const newParent = {
           name: parent,
           children: [],
           selectionId:categorySelectionId,
         };
         
+
         hierarchicalData.children.push(newParent);
         const filteredChildArray = children.filter((child, index) => `${parents[index]}` === `${parent}`);
         const filteredValuedArray = values.filter((value, index) => `${parents[index]}` === `${parent}`);
@@ -81,12 +76,11 @@ console.log(hierarchicalData)
           const newChild = {
             name: el,
             value: filteredValuedArray[index],
+            selectionId:categorySelectionId,
           };
           newParent.children.push(newChild);
         });
       }
-      
-     
     });
     
     const color = d3.scaleOrdinal(d3.quantize(d3.interpolateRainbow, dataView.categories.length + 1));
@@ -129,9 +123,10 @@ console.log(hierarchicalData)
       // .on("click", clicked);
       .on("click", (d: any) => {
         this.selectionManager.select(d.data.selectionId).then((ids: ISelectionId[]) => {
-          this.syncSelectionState(selectAll(".bar"), ids);
+          this.syncSelectionState(selectAll(".path"), ids);
         });
-      console.log(d)
+       
+       console.log(' :',d );
       });
 
 
@@ -211,19 +206,18 @@ console.log(hierarchicalData)
       return `rotate(${x - 90}) translate(${y},0) rotate(${x < 180 ? 0 : 180})`;
     }
   }
-
-  private syncSelectionState(barSelection: d3.Selection<d3.BaseType, unknown, HTMLElement, any>, selectionIds: ISelectionId[]) {
-    if (!barSelection || !selectionIds) {
+  private syncSelectionState(pathSelection: d3.Selection<d3.BaseType, unknown, HTMLElement, any>, selectionIds: ISelectionId[]) {
+    if (!pathSelection || !selectionIds) {
       return;
     }
   
     if (selectionIds.length === 0) {
-      barSelection.style("opacity", 1);
+      pathSelection.style("opacity", 1);
       return;
     }
   
-    barSelection.each((hierarchicalData: any, i, e) => {
-      const selectionId = hierarchicalData.children.SelectionId;
+    pathSelection.each((hierarchicalData: any, i, e) => {
+      const selectionId = hierarchicalData.children.selectionId;
       const isSelected = selectionIds.some((currentSelectionId) => {
         return currentSelectionId.includes(selectionId);
       });

@@ -133,11 +133,11 @@ class Visual {
             name: "sunburst",
             children: [],
         };
-        console.log(hierarchicalData);
+        console.log("hierarchicalData", hierarchicalData);
         parents.forEach((parent, categoryIndex) => {
             const existingParent = hierarchicalData.children.find((item) => item.name === parent);
-            const categorySelectionId = this.host.createSelectionIdBuilder().withCategory(categories[0], categoryIndex).createSelectionId();
             if (!existingParent) {
+                const categorySelectionId = this.host.createSelectionIdBuilder().withCategory(categories[0], categoryIndex).createSelectionId();
                 const newParent = {
                     name: parent,
                     children: [],
@@ -150,6 +150,7 @@ class Visual {
                     const newChild = {
                         name: el,
                         value: filteredValuedArray[index],
+                        selectionId: categorySelectionId,
                     };
                     newParent.children.push(newChild);
                 });
@@ -192,9 +193,9 @@ class Visual {
             // .on("click", clicked);
             .on("click", (d) => {
             this.selectionManager.select(d.data.selectionId).then((ids) => {
-                this.syncSelectionState((0,d3__WEBPACK_IMPORTED_MODULE_1__/* .selectAll */ .td_)(".bar"), ids);
+                this.syncSelectionState((0,d3__WEBPACK_IMPORTED_MODULE_1__/* .selectAll */ .td_)(".path"), ids);
             });
-            console.log(d);
+            console.log(' :', d);
         });
         const format = d3__WEBPACK_IMPORTED_MODULE_1__/* .format */ .WUZ(",d");
         path.append("title")
@@ -264,16 +265,16 @@ class Visual {
             return `rotate(${x - 90}) translate(${y},0) rotate(${x < 180 ? 0 : 180})`;
         }
     }
-    syncSelectionState(barSelection, selectionIds) {
-        if (!barSelection || !selectionIds) {
+    syncSelectionState(pathSelection, selectionIds) {
+        if (!pathSelection || !selectionIds) {
             return;
         }
         if (selectionIds.length === 0) {
-            barSelection.style("opacity", 1);
+            pathSelection.style("opacity", 1);
             return;
         }
-        barSelection.each((hierarchicalData, i, e) => {
-            const selectionId = hierarchicalData.children.SelectionId;
+        pathSelection.each((hierarchicalData, i, e) => {
+            const selectionId = hierarchicalData.children.selectionId;
             const isSelected = selectionIds.some((currentSelectionId) => {
                 return currentSelectionId.includes(selectionId);
             });
@@ -6699,7 +6700,7 @@ function creatorFixed(fullname) {
 /* harmony export */   "td": () => (/* reexport safe */ _selectAll__WEBPACK_IMPORTED_MODULE_1__.Z)
 /* harmony export */ });
 /* harmony import */ var _select__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(4017);
-/* harmony import */ var _selectAll__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(628);
+/* harmony import */ var _selectAll__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(9628);
 
 
 
@@ -6793,7 +6794,7 @@ var xhtml = "http://www.w3.org/1999/xhtml";
 
 /***/ }),
 
-/***/ 628:
+/***/ 9628:
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
