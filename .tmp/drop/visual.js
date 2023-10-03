@@ -134,10 +134,12 @@ class Visual {
         };
         parents.forEach((parent, categoryIndex) => {
             const existingParent = hierarchicalData.children.find((item) => item.name === parent);
+            const categorySelectionId = this.host.createSelectionIdBuilder().withCategory(categories[0], categoryIndex).createSelectionId();
             if (!existingParent) {
                 const newParent = {
                     name: parent,
                     children: [],
+                    selectionId: categorySelectionId,
                 };
                 hierarchicalData.children.push(newParent);
                 const filteredChildArray = children.filter((child, index) => `${parents[index]}` === `${parent}`);
@@ -177,7 +179,6 @@ class Visual {
             .style("font-size", canvasHeight / 50)
             .style("cursor", "auto");
         const path = svg.append("g")
-            .classed("slicegroup", true)
             .selectAll("path")
             .data(root.descendants().slice(1))
             .join("path")
@@ -186,14 +187,13 @@ class Visual {
             .attr("fill-opacity", (d) => arcVisible(d.current) ? (d.children ? 1 : 0.5) : 0)
             .attr("pointer-events", (d) => arcVisible(d.current) ? "auto" : "none")
             .attr("d", (d) => arc(d.current))
-            .classed("slice", true)
-            // path.filter((d: any) => d.children)
-            // .classed("path-filter", true)
-            // .on("click", clicked);
-            .on("click", (d) => {
+            .classed("slice", true);
+        // path.filter((d: any) => d.children)
+        // .classed("path-filter", true)
+        path.on("click", (d) => {
+            console.log(' d:', d);
             const isParent = d.children ? true : false;
-            const selectionIds = isParent ? d.data.children.map((el) => el.selectionId) : [d.data.selectionId];
-            //  console.log(isParent,d)
+            const selectionIds = isParent ? d.data.children.map((el) => el.selectionId) : d.data.selectionId;
             this.selectionManager.select(selectionIds).then((ids) => {
                 this.syncSelectionState((0,d3__WEBPACK_IMPORTED_MODULE_1__/* .selectAll */ .td_)(".slice"), ids);
             });
@@ -280,8 +280,9 @@ class Visual {
                 const isSelected = selectionIds.some((currentSelectionId) => {
                     return currentSelectionId.includes(selectionId);
                 });
-                const opacity = isSelected ? 1 : 0.5;
+                const opacity = isSelected ? 1 : 0.2;
                 const currentBar = (0,d3__WEBPACK_IMPORTED_MODULE_1__/* .select */ .Ys)(e[i]);
+                console.log(' :', currentBar);
                 currentBar.style("opacity", opacity);
             }
         });
