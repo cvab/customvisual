@@ -125,7 +125,6 @@ class Visual {
         const dataView = options.dataViews[0].categorical;
         const valuess = dataView.values[0];
         const categories = dataView.categories;
-        console.log(categories);
         const parents = dataView.categories[0].values;
         const children = dataView.categories[1].values;
         const values = valuess.values;
@@ -133,20 +132,19 @@ class Visual {
             name: "sunburst",
             children: [],
         };
-        console.log("hierarchicalData", hierarchicalData);
         parents.forEach((parent, categoryIndex) => {
             const existingParent = hierarchicalData.children.find((item) => item.name === parent);
             if (!existingParent) {
-                const categorySelectionId = this.host.createSelectionIdBuilder().withCategory(categories[0], categoryIndex).createSelectionId();
                 const newParent = {
                     name: parent,
                     children: [],
-                    selectionId: categorySelectionId,
                 };
                 hierarchicalData.children.push(newParent);
                 const filteredChildArray = children.filter((child, index) => `${parents[index]}` === `${parent}`);
                 const filteredValuedArray = values.filter((value, index) => `${parents[index]}` === `${parent}`);
                 filteredChildArray.forEach((el, index) => {
+                    const childIndex = children.findIndex((child) => child === el);
+                    const categorySelectionId = this.host.createSelectionIdBuilder().withCategory(categories[1], childIndex).createSelectionId();
                     const newChild = {
                         name: el,
                         value: filteredValuedArray[index],
@@ -179,7 +177,7 @@ class Visual {
             .style("font-size", canvasHeight / 50)
             .style("cursor", "auto");
         const path = svg.append("g")
-            .classed("bar", true)
+            .classed("slicegroup", true)
             .selectAll("path")
             .data(root.descendants().slice(1))
             .join("path")
@@ -187,15 +185,18 @@ class Visual {
             d = d.parent; return color(d.data.name); })
             .attr("fill-opacity", (d) => arcVisible(d.current) ? (d.children ? 1 : 0.5) : 0)
             .attr("pointer-events", (d) => arcVisible(d.current) ? "auto" : "none")
-            .attr("d", (d) => arc(d.current));
-        path.filter((d) => d.children)
-            .classed("path-filter", true)
+            .attr("d", (d) => arc(d.current))
+            .classed("slice", true)
+            // path.filter((d: any) => d.children)
+            // .classed("path-filter", true)
             // .on("click", clicked);
             .on("click", (d) => {
-            this.selectionManager.select(d.data.selectionId).then((ids) => {
-                this.syncSelectionState((0,d3__WEBPACK_IMPORTED_MODULE_1__/* .selectAll */ .td_)(".path"), ids);
+            const isParent = d.children ? true : false;
+            const selectionIds = isParent ? d.data.children.map((el) => el.selectionId) : [d.data.selectionId];
+            //  console.log(isParent,d)
+            this.selectionManager.select(selectionIds).then((ids) => {
+                this.syncSelectionState((0,d3__WEBPACK_IMPORTED_MODULE_1__/* .selectAll */ .td_)(".slice"), ids);
             });
-            console.log(' :', d);
         });
         const format = d3__WEBPACK_IMPORTED_MODULE_1__/* .format */ .WUZ(",d");
         path.append("title")
@@ -274,13 +275,15 @@ class Visual {
             return;
         }
         pathSelection.each((hierarchicalData, i, e) => {
-            const selectionId = hierarchicalData.children.selectionId;
-            const isSelected = selectionIds.some((currentSelectionId) => {
-                return currentSelectionId.includes(selectionId);
-            });
-            const opacity = isSelected ? 1 : 0.5;
-            const currentBar = (0,d3__WEBPACK_IMPORTED_MODULE_1__/* .select */ .Ys)(e[i]);
-            currentBar.style("opacity", opacity);
+            const selectionId = hierarchicalData === null || hierarchicalData === void 0 ? void 0 : hierarchicalData.data.selectionId;
+            if (selectionId) {
+                const isSelected = selectionIds.some((currentSelectionId) => {
+                    return currentSelectionId.includes(selectionId);
+                });
+                const opacity = isSelected ? 1 : 0.5;
+                const currentBar = (0,d3__WEBPACK_IMPORTED_MODULE_1__/* .select */ .Ys)(e[i]);
+                currentBar.style("opacity", opacity);
+            }
         });
     }
     /*
@@ -6700,7 +6703,7 @@ function creatorFixed(fullname) {
 /* harmony export */   "td": () => (/* reexport safe */ _selectAll__WEBPACK_IMPORTED_MODULE_1__.Z)
 /* harmony export */ });
 /* harmony import */ var _select__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(4017);
-/* harmony import */ var _selectAll__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(9628);
+/* harmony import */ var _selectAll__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(628);
 
 
 
@@ -6794,7 +6797,7 @@ var xhtml = "http://www.w3.org/1999/xhtml";
 
 /***/ }),
 
-/***/ 9628:
+/***/ 628:
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {

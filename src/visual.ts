@@ -42,7 +42,6 @@ export class Visual implements IVisual {
     const dataView = options.dataViews[0].categorical;
     const valuess = dataView.values[0];
     const categories=dataView.categories;
-    console.log(categories)
     const parents = dataView.categories[0].values as string[];
    
     const children = dataView.categories[1].values as string[];
@@ -54,25 +53,21 @@ export class Visual implements IVisual {
       name: "sunburst",
       children :[],
     };
-
-    console.log("hierarchicalData",hierarchicalData)
-    
     parents.forEach((parent,categoryIndex) => {
-      
       const existingParent = hierarchicalData.children.find((item) => item.name === parent);
       if (!existingParent) {
-        const categorySelectionId = this.host.createSelectionIdBuilder().withCategory(categories[0], categoryIndex).createSelectionId();
+       
         const newParent = {
           name: parent,
           children: [],
-          selectionId:categorySelectionId,
         };
         
-
         hierarchicalData.children.push(newParent);
         const filteredChildArray = children.filter((child, index) => `${parents[index]}` === `${parent}`);
         const filteredValuedArray = values.filter((value, index) => `${parents[index]}` === `${parent}`);
         filteredChildArray.forEach((el, index) => {
+          const childIndex = children.findIndex((child)=>child===el)
+          const categorySelectionId = this.host.createSelectionIdBuilder().withCategory(categories[1],childIndex).createSelectionId();
           const newChild = {
             name: el,
             value: filteredValuedArray[index],
@@ -110,7 +105,7 @@ export class Visual implements IVisual {
       .style("cursor", "auto");
 
     const path = svg.append("g")
-    .classed("bar",true)
+    .classed("slicegroup",true)
       .selectAll("path")
       .data(root.descendants().slice(1))
       .join("path")
@@ -118,15 +113,18 @@ export class Visual implements IVisual {
       .attr("fill-opacity", (d: any) => arcVisible(d.current) ? (d.children ? 1 : 0.5) : 0)
       .attr("pointer-events", (d: any) => arcVisible(d.current) ? "auto" : "none")
       .attr("d", (d: any) => arc(d.current))
-    path.filter((d: any) => d.children)
-      .classed("path-filter", true)
+      .classed("slice",true)
+    // path.filter((d: any) => d.children)
+      // .classed("path-filter", true)
       // .on("click", clicked);
       .on("click", (d: any) => {
-        this.selectionManager.select(d.data.selectionId).then((ids: ISelectionId[]) => {
-          this.syncSelectionState(selectAll(".path"), ids);
+       const isParent = d.children?true:false;
+       const selectionIds = isParent? d.data.children.map((el)=>el.selectionId):[d.data.selectionId]
+      //  console.log(isParent,d)
+        this.selectionManager.select(selectionIds).then((ids: ISelectionId[]) => {
+          this.syncSelectionState(selectAll(".slice"), ids);
         });
        
-       console.log(' :',d );
       });
 
 
@@ -210,20 +208,22 @@ export class Visual implements IVisual {
     if (!pathSelection || !selectionIds) {
       return;
     }
-  
     if (selectionIds.length === 0) {
       pathSelection.style("opacity", 1);
       return;
     }
-  
     pathSelection.each((hierarchicalData: any, i, e) => {
-      const selectionId = hierarchicalData.children.selectionId;
+
+      const selectionId = hierarchicalData?.data.selectionId;
+      if(selectionId){
       const isSelected = selectionIds.some((currentSelectionId) => {
         return currentSelectionId.includes(selectionId);
       });
       const opacity = isSelected ? 1 : 0.5;
       const currentBar = select(e[i]);
       currentBar.style("opacity", opacity);
+    }
+
     });
   }
 
