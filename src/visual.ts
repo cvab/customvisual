@@ -43,32 +43,31 @@ export class Visual implements IVisual {
     const valuess = dataView.values[0];
     const categories = dataView.categories;
     const parents = dataView.categories[0].values as string[];
-
     const children = dataView.categories[1].values as string[];
-
     const values = valuess.values as number[];
-
 
     const hierarchicalData = {
       name: "sunburst",
       children: [],
     };
 
+    console.log(' hierac:', hierarchicalData);
     parents.forEach((parent, categoryIndex) => {
+
       const existingParent = hierarchicalData.children.find((item) => item.name === parent);
-      const categorySelectionId = this.host.createSelectionIdBuilder().withCategory(categories[0],categoryIndex).createSelectionId();
+      const parentSelectionId = this.host.createSelectionIdBuilder().withCategory(categories[0], categoryIndex).createSelectionId();
       if (!existingParent) {
-       
         const newParent = {
           name: parent,
           children: [],
-          selectionId: categorySelectionId,
+          selectionId: parentSelectionId,
         };
 
         hierarchicalData.children.push(newParent);
         const filteredChildArray = children.filter((child, index) => `${parents[index]}` === `${parent}`);
         const filteredValuedArray = values.filter((value, index) => `${parents[index]}` === `${parent}`);
         filteredChildArray.forEach((el, index) => {
+
           const childIndex = children.findIndex((child) => child === el)
           const categorySelectionId = this.host.createSelectionIdBuilder().withCategory(categories[1], childIndex).createSelectionId();
           const newChild = {
@@ -81,7 +80,7 @@ export class Visual implements IVisual {
       }
     });
 
-    const color = d3.scaleOrdinal(d3.quantize(d3.interpolateRainbow, dataView.categories.length + 1));
+    const color = d3.scaleOrdinal(d3.quantize(d3.interpolateRainbow, hierarchicalData.children.length + 1));
     // Compute the layout.
     const hierarchy = d3.hierarchy(hierarchicalData)
       .sum((d: any) => d.value)
@@ -91,7 +90,6 @@ export class Visual implements IVisual {
       .size([2 * Math.PI, hierarchy.height + 1])
       (hierarchy);
     root.each((d: any) => d.current = d);
-
     // Create the arc generator.
     const arc = d3.arc()
       .startAngle((d: any) => d.x0)
@@ -108,6 +106,7 @@ export class Visual implements IVisual {
       .style("cursor", "auto");
 
     const path = svg.append("g")
+      .classed("slicegroup", true)
       .selectAll("path")
       .data(root.descendants().slice(1))
       .join("path")
@@ -115,21 +114,20 @@ export class Visual implements IVisual {
       .attr("fill-opacity", (d: any) => arcVisible(d.current) ? (d.children ? 1 : 0.5) : 0)
       .attr("pointer-events", (d: any) => arcVisible(d.current) ? "auto" : "none")
       .attr("d", (d: any) => arc(d.current))
-      .classed("slice", true);
-    // path.filter((d: any) => d.children)
-    // .classed("path-filter", true)
+      .classed("slice", true)
+      // path.filter((d: any) => d.children)
+      // .classed("path-filter", true)
+      // .on("click", clicked);
+      .on("click", (d: any) => {
 
-    path.on("click", (d: any) => {
+        const isParent = d.children ? true : false;
+        const selectionIds = isParent ? d.data.children.map((el) => el.selectionId) : [d.data.selectionId]
 
-      console.log(' d:', d);
-      const isParent = d.children ? true : false;
-       const selectionIds = isParent? d.data.children.map((el)=>el.selectionId):d.data.selectionId;
-     
-      this.selectionManager.select(selectionIds).then((ids: ISelectionId[]) => {
-        this.syncSelectionState(selectAll(".slice"), ids);
+        this.selectionManager.select(selectionIds).then((ids: ISelectionId[]) => {
+          this.syncSelectionState(selectAll(".slice"), ids);
+        });
+
       });
-
-    });
 
 
     const format = d3.format(",d");
@@ -193,7 +191,6 @@ export class Visual implements IVisual {
     //     .attr("fill-opacity", (d: any) => +labelVisible(d.target))
     //     .attrTween("transform", (d: any) => () => labelTransform(d.current));
     // }
-
     function arcVisible(d: { y1: number; y0: number; x1: number; x0: number; }) {
       return d.y1 <= 3 && d.y0 >= 1 && d.x1 > d.x0;
     }
@@ -208,6 +205,46 @@ export class Visual implements IVisual {
       return `rotate(${x - 90}) translate(${y},0) rotate(${x < 180 ? 0 : 180})`;
     }
   }
+
+  // private syncSelectionState(pathSelection: d3.Selection<d3.BaseType, unknown, HTMLElement, any>, selectionIds: ISelectionId[]) {
+  //   if (!pathSelection || !selectionIds) {
+  //     return;
+  //   }
+  //   if (selectionIds.length === 0) {
+  //     pathSelection.style("opacity", 1);
+  //     return;
+  //   }
+  //   pathSelection.each((hierarchicalData: any, i, e) => {
+
+  //     const isParent = hierarchicalData?.children ? true : false;
+  //     let isSelected = false;
+
+  //     if (isParent) {
+  //       const selectionIds = hierarchicalData.data.children.map((el: { selectionId: any; }) => el.selectionId);
+  //       isSelected = selectionIds.some((currentSelectionId) => {
+  //         // console.log('current :', currentSelectionId);
+  //         return currentSelectionId.includes(selectionIds);
+  //       });
+  //     }
+  //     else {
+  //       const selectionId = hierarchicalData?.data.children.map((el:{selectionId:any;})=>el.selectionId);
+  //       if (selectionId) {
+  //         isSelected = selectionId.some((currentSelectionId) => {
+  //           console.log('current :', isSelected);
+  //           return currentSelectionId.includes(selectionId);
+  //         });
+  //         // console.log('isselected :',isSelected );
+  //       }
+
+  //       const opacity = isSelected ? 1 : 0.5;
+  //       const currentBar = select(e[i]);
+  //       currentBar.style("opacity", opacity);
+  //     }
+
+  //   });
+  // }
+
+
   private syncSelectionState(pathSelection: d3.Selection<d3.BaseType, unknown, HTMLElement, any>, selectionIds: ISelectionId[]) {
     if (!pathSelection || !selectionIds) {
       return;
@@ -217,19 +254,27 @@ export class Visual implements IVisual {
       return;
     }
     pathSelection.each((hierarchicalData: any, i, e) => {
-      const selectionId = hierarchicalData?.data.selectionId;
-      if (selectionId) {
-        const isSelected = selectionIds.some((currentSelectionId) => {
-          return currentSelectionId.includes(selectionId);
-        });
-        const opacity = isSelected ? 1 : 0.2;
-        const currentBar = select(e[i]);
-
-        console.log(' :', currentBar);
-        currentBar.style("opacity", opacity);
+      const isParent = hierarchicalData?.children ? true : false;
+      let isSelected = false;
+  
+      if (isParent) {
+        // Check if any child selectionId is in the selectionIds array
+        isSelected = hierarchicalData.data.children.some((child: { selectionId: ISelectionId }) =>
+          selectionIds.some((selectedId: ISelectionId) => child.selectionId.includes(selectedId))
+        );
+      } else {
+        // Check if the current element's selectionId is in the selectionIds array
+        isSelected = selectionIds.some((selectedId: ISelectionId) =>
+          hierarchicalData.data.selectionId.includes(selectedId)
+        );
       }
+  
+      const opacity = isSelected ? 1 : 0.3;
+      const currentBar = select(e[i]);
+      currentBar.style("opacity", opacity);
     });
   }
+  
 
   /*
    * Returns properties pane formatting model content hierarchies, properties and latest formatting values, Then populate properties pane.

@@ -10,11 +10,7 @@
             "name": "child",
             "kind": "Grouping"
         },
-        {
-            "displayName": "child1",
-            "name": "child1",
-            "kind": "Grouping"
-        },
+        
         {
             "displayName": "Measure Data",
             "name": "measure",

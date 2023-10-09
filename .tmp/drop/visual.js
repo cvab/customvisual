@@ -132,14 +132,15 @@ class Visual {
             name: "sunburst",
             children: [],
         };
+        console.log(' hierac:', hierarchicalData);
         parents.forEach((parent, categoryIndex) => {
             const existingParent = hierarchicalData.children.find((item) => item.name === parent);
-            const categorySelectionId = this.host.createSelectionIdBuilder().withCategory(categories[0], categoryIndex).createSelectionId();
+            const parentSelectionId = this.host.createSelectionIdBuilder().withCategory(categories[0], categoryIndex).createSelectionId();
             if (!existingParent) {
                 const newParent = {
                     name: parent,
                     children: [],
-                    selectionId: categorySelectionId,
+                    selectionId: parentSelectionId,
                 };
                 hierarchicalData.children.push(newParent);
                 const filteredChildArray = children.filter((child, index) => `${parents[index]}` === `${parent}`);
@@ -156,7 +157,7 @@ class Visual {
                 });
             }
         });
-        const color = d3__WEBPACK_IMPORTED_MODULE_1__/* .scaleOrdinal */ .PKp(d3__WEBPACK_IMPORTED_MODULE_1__/* .quantize */ .q$2(d3__WEBPACK_IMPORTED_MODULE_1__/* .interpolateRainbow */ .ICD, dataView.categories.length + 1));
+        const color = d3__WEBPACK_IMPORTED_MODULE_1__/* .scaleOrdinal */ .PKp(d3__WEBPACK_IMPORTED_MODULE_1__/* .quantize */ .q$2(d3__WEBPACK_IMPORTED_MODULE_1__/* .interpolateRainbow */ .ICD, hierarchicalData.children.length + 1));
         // Compute the layout.
         const hierarchy = d3__WEBPACK_IMPORTED_MODULE_1__/* .hierarchy */ .bT9(hierarchicalData)
             .sum((d) => d.value)
@@ -179,6 +180,7 @@ class Visual {
             .style("font-size", canvasHeight / 50)
             .style("cursor", "auto");
         const path = svg.append("g")
+            .classed("slicegroup", true)
             .selectAll("path")
             .data(root.descendants().slice(1))
             .join("path")
@@ -187,13 +189,13 @@ class Visual {
             .attr("fill-opacity", (d) => arcVisible(d.current) ? (d.children ? 1 : 0.5) : 0)
             .attr("pointer-events", (d) => arcVisible(d.current) ? "auto" : "none")
             .attr("d", (d) => arc(d.current))
-            .classed("slice", true);
-        // path.filter((d: any) => d.children)
-        // .classed("path-filter", true)
-        path.on("click", (d) => {
-            console.log(' d:', d);
+            .classed("slice", true)
+            // path.filter((d: any) => d.children)
+            // .classed("path-filter", true)
+            // .on("click", clicked);
+            .on("click", (d) => {
             const isParent = d.children ? true : false;
-            const selectionIds = isParent ? d.data.children.map((el) => el.selectionId) : d.data.selectionId;
+            const selectionIds = isParent ? d.data.children.map((el) => el.selectionId) : [d.data.selectionId];
             this.selectionManager.select(selectionIds).then((ids) => {
                 this.syncSelectionState((0,d3__WEBPACK_IMPORTED_MODULE_1__/* .selectAll */ .td_)(".slice"), ids);
             });
@@ -266,6 +268,39 @@ class Visual {
             return `rotate(${x - 90}) translate(${y},0) rotate(${x < 180 ? 0 : 180})`;
         }
     }
+    // private syncSelectionState(pathSelection: d3.Selection<d3.BaseType, unknown, HTMLElement, any>, selectionIds: ISelectionId[]) {
+    //   if (!pathSelection || !selectionIds) {
+    //     return;
+    //   }
+    //   if (selectionIds.length === 0) {
+    //     pathSelection.style("opacity", 1);
+    //     return;
+    //   }
+    //   pathSelection.each((hierarchicalData: any, i, e) => {
+    //     const isParent = hierarchicalData?.children ? true : false;
+    //     let isSelected = false;
+    //     if (isParent) {
+    //       const selectionIds = hierarchicalData.data.children.map((el: { selectionId: any; }) => el.selectionId);
+    //       isSelected = selectionIds.some((currentSelectionId) => {
+    //         // console.log('current :', currentSelectionId);
+    //         return currentSelectionId.includes(selectionIds);
+    //       });
+    //     }
+    //     else {
+    //       const selectionId = hierarchicalData?.data.children.map((el:{selectionId:any;})=>el.selectionId);
+    //       if (selectionId) {
+    //         isSelected = selectionId.some((currentSelectionId) => {
+    //           console.log('current :', isSelected);
+    //           return currentSelectionId.includes(selectionId);
+    //         });
+    //         // console.log('isselected :',isSelected );
+    //       }
+    //       const opacity = isSelected ? 1 : 0.5;
+    //       const currentBar = select(e[i]);
+    //       currentBar.style("opacity", opacity);
+    //     }
+    //   });
+    // }
     syncSelectionState(pathSelection, selectionIds) {
         if (!pathSelection || !selectionIds) {
             return;
@@ -275,16 +310,19 @@ class Visual {
             return;
         }
         pathSelection.each((hierarchicalData, i, e) => {
-            const selectionId = hierarchicalData === null || hierarchicalData === void 0 ? void 0 : hierarchicalData.data.selectionId;
-            if (selectionId) {
-                const isSelected = selectionIds.some((currentSelectionId) => {
-                    return currentSelectionId.includes(selectionId);
-                });
-                const opacity = isSelected ? 1 : 0.2;
-                const currentBar = (0,d3__WEBPACK_IMPORTED_MODULE_1__/* .select */ .Ys)(e[i]);
-                console.log(' :', currentBar);
-                currentBar.style("opacity", opacity);
+            const isParent = (hierarchicalData === null || hierarchicalData === void 0 ? void 0 : hierarchicalData.children) ? true : false;
+            let isSelected = false;
+            if (isParent) {
+                // Check if any child selectionId is in the selectionIds array
+                isSelected = hierarchicalData.data.children.some((child) => selectionIds.some((selectedId) => child.selectionId.includes(selectedId)));
             }
+            else {
+                // Check if the current element's selectionId is in the selectionIds array
+                isSelected = selectionIds.some((selectedId) => hierarchicalData.data.selectionId.includes(selectedId));
+            }
+            const opacity = isSelected ? 1 : 0.3;
+            const currentBar = (0,d3__WEBPACK_IMPORTED_MODULE_1__/* .select */ .Ys)(e[i]);
+            currentBar.style("opacity", opacity);
         });
     }
     /*
@@ -6704,7 +6742,7 @@ function creatorFixed(fullname) {
 /* harmony export */   "td": () => (/* reexport safe */ _selectAll__WEBPACK_IMPORTED_MODULE_1__.Z)
 /* harmony export */ });
 /* harmony import */ var _select__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(4017);
-/* harmony import */ var _selectAll__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(628);
+/* harmony import */ var _selectAll__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(9628);
 
 
 
@@ -6798,7 +6836,7 @@ var xhtml = "http://www.w3.org/1999/xhtml";
 
 /***/ }),
 
-/***/ 628:
+/***/ 9628:
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
