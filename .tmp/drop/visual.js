@@ -268,39 +268,6 @@ class Visual {
             return `rotate(${x - 90}) translate(${y},0) rotate(${x < 180 ? 0 : 180})`;
         }
     }
-    // private syncSelectionState(pathSelection: d3.Selection<d3.BaseType, unknown, HTMLElement, any>, selectionIds: ISelectionId[]) {
-    //   if (!pathSelection || !selectionIds) {
-    //     return;
-    //   }
-    //   if (selectionIds.length === 0) {
-    //     pathSelection.style("opacity", 1);
-    //     return;
-    //   }
-    //   pathSelection.each((hierarchicalData: any, i, e) => {
-    //     const isParent = hierarchicalData?.children ? true : false;
-    //     let isSelected = false;
-    //     if (isParent) {
-    //       const selectionIds = hierarchicalData.data.children.map((el: { selectionId: any; }) => el.selectionId);
-    //       isSelected = selectionIds.some((currentSelectionId) => {
-    //         // console.log('current :', currentSelectionId);
-    //         return currentSelectionId.includes(selectionIds);
-    //       });
-    //     }
-    //     else {
-    //       const selectionId = hierarchicalData?.data.children.map((el:{selectionId:any;})=>el.selectionId);
-    //       if (selectionId) {
-    //         isSelected = selectionId.some((currentSelectionId) => {
-    //           console.log('current :', isSelected);
-    //           return currentSelectionId.includes(selectionId);
-    //         });
-    //         // console.log('isselected :',isSelected );
-    //       }
-    //       const opacity = isSelected ? 1 : 0.5;
-    //       const currentBar = select(e[i]);
-    //       currentBar.style("opacity", opacity);
-    //     }
-    //   });
-    // }
     syncSelectionState(pathSelection, selectionIds) {
         if (!pathSelection || !selectionIds) {
             return;
@@ -313,6 +280,7 @@ class Visual {
             const isParent = (hierarchicalData === null || hierarchicalData === void 0 ? void 0 : hierarchicalData.children) ? true : false;
             let isSelected = false;
             if (isParent) {
+                console.log('checking :', hierarchicalData);
                 // Check if any child selectionId is in the selectionIds array
                 isSelected = hierarchicalData.data.children.some((child) => selectionIds.some((selectedId) => child.selectionId.includes(selectedId)));
             }
@@ -320,7 +288,7 @@ class Visual {
                 // Check if the current element's selectionId is in the selectionIds array
                 isSelected = selectionIds.some((selectedId) => hierarchicalData.data.selectionId.includes(selectedId));
             }
-            const opacity = isSelected ? 1 : 0.3;
+            const opacity = isSelected ? 1 : 0.4;
             const currentBar = (0,d3__WEBPACK_IMPORTED_MODULE_1__/* .select */ .Ys)(e[i]);
             currentBar.style("opacity", opacity);
         });
