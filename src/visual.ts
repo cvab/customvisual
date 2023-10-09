@@ -14,6 +14,9 @@ import IVisualHost = powerbi.extensibility.visual.IVisualHost;
 import ISelectionId = powerbi.visuals.ISelectionId;
 import { select, selectAll } from "d3";
 
+import VisualTooltipDataItem = powerbi.extensibility.VisualTooltipDataItem;
+import { createTooltipServiceWrapper, ITooltipServiceWrapper, TooltipEventArgs } from "powerbi-visuals-utils-tooltiputils";
+
 export class Visual implements IVisual {
   private target: HTMLElement;
   private formattingSettings: VisualFormattingSettingsModel;
@@ -21,15 +24,20 @@ export class Visual implements IVisual {
   sunburstchartsvg: d3.Selection<SVGSVGElement, unknown, null, undefined>;
   private selectionManager: ISelectionManager;
   public host: IVisualHost;
+  private tooltipServiceWrapper: ITooltipServiceWrapper;
 
   constructor(options: VisualConstructorOptions) {
-
+    
     this.formattingSettingsService = new FormattingSettingsService();
     this.host = options.host;
     this.selectionManager = this.host.createSelectionManager();
     this.target = options.element;
     this.sunburstchartsvg = d3.select(this.target).append("svg").classed("sunburstchartsvg", true);
 
+    this.tooltipServiceWrapper = createTooltipServiceWrapper(
+      this.host.tooltipService,
+      options.element
+    );
   }
 
   public update(options: VisualUpdateOptions) {
@@ -51,7 +59,6 @@ export class Visual implements IVisual {
       children: [],
     };
 
-    console.log(' hierac:', hierarchicalData);
     parents.forEach((parent, categoryIndex) => {
 
       const existingParent = hierarchicalData.children.find((item) => item.name === parent);
@@ -69,11 +76,11 @@ export class Visual implements IVisual {
         filteredChildArray.forEach((el, index) => {
 
           const childIndex = children.findIndex((child) => child === el)
-          const categorySelectionId = this.host.createSelectionIdBuilder().withCategory(categories[1], childIndex).createSelectionId();
+          const childSelectionId = this.host.createSelectionIdBuilder().withCategory(categories[1], childIndex).createSelectionId();
           const newChild = {
             name: el,
             value: filteredValuedArray[index],
-            selectionId: categorySelectionId,
+            selectionId: childSelectionId,
           };
           newParent.children.push(newChild);
         });
@@ -129,11 +136,10 @@ export class Visual implements IVisual {
 
       });
 
-
-    const format = d3.format(",d");
-    path.append("title")
-      .classed("title-text", true)
-      .text(d => `${d.ancestors().map((d: any) => d.data.name).reverse().join("/")}\n${format(d.value)}`);
+    // const format = d3.format(",d");
+    // path.append("title")
+    //   .classed("title-text", true)
+    //   .text(d => `${d.ancestors().map((d: any) => d.data.name).reverse().join("/")}\n${format(d.value)}`);
 
     const label = svg.append("g")
       .attr("pointer-events", "none")
@@ -154,11 +160,7 @@ export class Visual implements IVisual {
       .attr("fill", "none")
       .attr("pointer-events", "all")
     // .on("click", clicked);
-    // .on("click", (d: any) => {
-    //   this.selectionManager.select(d.selectionId).then((ids: ISelectionId[]) => {
-    //     this.syncSelectionState(selectAll(".bar"), ids);
-    //   });
-    // });
+
     // function clicked(p: { parent: any; x0: number; x1: number; depth: number; }) {
     //   parent.datum(p.parent || root);
 
@@ -191,6 +193,7 @@ export class Visual implements IVisual {
     //     .attr("fill-opacity", (d: any) => +labelVisible(d.target))
     //     .attrTween("transform", (d: any) => () => labelTransform(d.current));
     // }
+
     function arcVisible(d: { y1: number; y0: number; x1: number; x0: number; }) {
       return d.y1 <= 3 && d.y0 >= 1 && d.x1 > d.x0;
     }
@@ -204,6 +207,36 @@ export class Visual implements IVisual {
       const y = (d.y0 + d.y1) / 2 * radius;
       return `rotate(${x - 90}) translate(${y},0) rotate(${x < 180 ? 0 : 180})`;
     }
+
+    this.tooltipServiceWrapper.addTooltip(
+      selectAll(".slice"),
+      (tooltipEvent: TooltipEventArgs<number>) =>
+        this.getTooltipData(tooltipEvent.data),
+      (tooltipEvent: any) => tooltipEvent.data.selectionId
+    );
+    
+    // Add tooltip to label elements if needed
+    this.tooltipServiceWrapper.addTooltip(
+      label,
+      (tooltipEvent: TooltipEventArgs<number>) => this.getTooltipData(tooltipEvent.data),
+      (tooltipEvent: any) => tooltipEvent.data.selectionId
+    );
+    
+  }
+
+  private getTooltipData(hierarchicalData: any): VisualTooltipDataItem[] {
+    const tooltipDataArray: VisualTooltipDataItem[] = [];
+  
+    // Example: Construct tooltip data for a parent element
+    if (hierarchicalData && hierarchicalData.hierarchicalData) {
+      tooltipDataArray.push({
+        header: hierarchicalData.hierarchicalData.name, // Use the appropriate field for the header
+        displayName: "Value",
+        value: hierarchicalData.value.toString(), // Use the appropriate field for the value
+      });
+    }
+  
+    return tooltipDataArray;
   }
   
   private syncSelectionState(pathSelection: d3.Selection<d3.BaseType, unknown, HTMLElement, any>, selectionIds: ISelectionId[]) {
@@ -219,8 +252,6 @@ export class Visual implements IVisual {
       let isSelected = false;
   
       if (isParent) {
-
-        console.log('checking :',hierarchicalData );
         // Check if any child selectionId is in the selectionIds array
         isSelected = hierarchicalData.data.children.some((child: { selectionId: ISelectionId }) =>
           selectionIds.some((selectedId: ISelectionId) => child.selectionId.includes(selectedId))
@@ -237,7 +268,6 @@ export class Visual implements IVisual {
       currentBar.style("opacity", opacity);
     });
   }
-  
 
   /*
    * Returns properties pane formatting model content hierarchies, properties and latest formatting values, Then populate properties pane.

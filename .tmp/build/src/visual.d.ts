@@ -12,8 +12,10 @@ export declare class Visual implements IVisual {
     sunburstchartsvg: d3.Selection<SVGSVGElement, unknown, null, undefined>;
     private selectionManager;
     host: IVisualHost;
+    private tooltipServiceWrapper;
     constructor(options: VisualConstructorOptions);
     update(options: VisualUpdateOptions): void;
+    private getTooltipData;
     private syncSelectionState;
     getFormattingModel(): powerbi.visuals.FormattingModel;
 }
